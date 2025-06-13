@@ -5,6 +5,7 @@ import ProductCard from './ProductCard';
 const menuCategories = [
   {
     title: "Lanches Tradicionais",
+    id: "lanches-tradicionais",
     items: [
       {
         id: "1",
@@ -31,6 +32,7 @@ const menuCategories = [
   },
   {
     title: "Smash e Gourmet",
+    id: "smash-gourmet",
     items: [
       {
         id: "4",
@@ -50,6 +52,7 @@ const menuCategories = [
   },
   {
     title: "Frango e Especiais",
+    id: "frango-especiais",
     items: [
       {
         id: "6",
@@ -69,6 +72,7 @@ const menuCategories = [
   },
   {
     title: "Bebidas",
+    id: "bebidas",
     items: [
       {
         id: "8",
@@ -104,7 +108,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ onProductClick }) => {
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
         {menuCategories.map((category, index) => (
-          <div key={index} className="mb-16">
+          <div key={index} id={category.id} className="mb-16 scroll-mt-24">
             <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
               {category.title}
             </h2>
