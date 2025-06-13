@@ -1,7 +1,23 @@
 
 import React from 'react';
+import { ShoppingCart } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
 
 const HeroSection = () => {
+  const { addItem } = useCart();
+
+  const handleAddPromoToCart = () => {
+    const promoItem = {
+      id: 'promo-x-tudo-combo',
+      name: 'Combo X-TUDO + Batata + Refrigerante',
+      price: 25.90,
+      image: '/placeholder.svg',
+      description: 'Promoção especial do dia! Combo completo com X-TUDO, batata frita e refrigerante.'
+    };
+    
+    addItem(promoItem);
+  };
+
   return (
     <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
       <div className="container mx-auto px-4 py-16">
@@ -19,8 +35,16 @@ const HeroSection = () => {
             <p className="text-lg font-semibold">
               Combo X-TUDO + Batata + Refrigerante
             </p>
-            <p className="text-3xl font-bold">R$ 25,90</p>
-            <p className="text-sm">*Válida apenas hoje!</p>
+            <p className="text-3xl font-bold mb-3">R$ 25,90</p>
+            <p className="text-sm mb-4">*Válida apenas hoje!</p>
+            
+            <button
+              onClick={handleAddPromoToCart}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto"
+            >
+              <ShoppingCart size={20} />
+              Adicionar ao Carrinho
+            </button>
           </div>
         </div>
       </div>
