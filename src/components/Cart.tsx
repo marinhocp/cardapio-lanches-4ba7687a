@@ -13,12 +13,24 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [address, setAddress] = useState('');
+  const [email, setEmail] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmitOrder = async () => {
     if (!paymentMethod || !deliveryMethod) {
       alert('Por favor, selecione a forma de pagamento e entrega.');
+      return;
+    }
+
+    if (deliveryMethod === 'delivery' && !address.trim()) {
+      alert('Por favor, informe o endereço para entrega.');
+      return;
+    }
+
+    if (paymentMethod === 'Pix' && !email.trim()) {
+      alert('Por favor, informe o email para o Pix.');
       return;
     }
 
@@ -34,10 +46,20 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     // Remover duplicatas
     const uniqueItems = [...new Set(orderItems)];
 
-    const orderMessage = `Você adicionou ao seu pedido o seguinte:
+    let orderMessage = `Você adicionou ao seu pedido o seguinte:
 ${uniqueItems.join('\n')}
 
 Forma de Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loja'}`;
+
+    if (deliveryMethod === 'delivery') {
+      orderMessage += `\nEndereço: ${address}`;
+    }
+
+    orderMessage += `\nForma de Pagamento: ${paymentMethod}`;
+
+    if (paymentMethod === 'Pix') {
+      orderMessage += `\nEmail: ${email}`;
+    }
 
     console.log('Pedido enviado:', orderMessage);
     
@@ -51,6 +73,8 @@ Forma de Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loj
     clearCart();
     setPaymentMethod('');
     setDeliveryMethod('');
+    setAddress('');
+    setEmail('');
     setIsSubmitting(false);
     onClose();
   };
@@ -119,6 +143,18 @@ Forma de Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loj
                   </button>
                 ))}
               </div>
+              
+              {paymentMethod === 'Pix' && (
+                <div className="mt-3">
+                  <input
+                    type="email"
+                    placeholder="Digite seu email para o Pix"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-red-600 focus:outline-none"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -141,6 +177,18 @@ Forma de Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loj
                   </button>
                 ))}
               </div>
+              
+              {deliveryMethod === 'delivery' && (
+                <div className="mt-3">
+                  <textarea
+                    placeholder="Digite seu endereço completo para entrega"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    rows={3}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-red-600 focus:outline-none resize-none"
+                  />
+                </div>
+              )}
             </div>
 
             <button
