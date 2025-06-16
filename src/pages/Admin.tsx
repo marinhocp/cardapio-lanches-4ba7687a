@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, LogOut } from 'lucide-react';
+import { Plus, Edit, Trash2, LogOut, Users } from 'lucide-react';
 import CategoryManager from '@/components/admin/CategoryManager';
 import ProductManager from '@/components/admin/ProductManager';
 import PromotionManager from '@/components/admin/PromotionManager';
+import UserManager from '@/components/admin/UserManager';
 
 const Admin = () => {
   const { user, loading, isAdmin, signOut } = useAuth();
@@ -57,15 +58,16 @@ const Admin = () => {
           <CardHeader>
             <CardTitle>Painel Administrativo</CardTitle>
             <CardDescription>
-              Gerencie categorias, produtos e promoções do seu restaurante
+              Gerencie categorias, produtos, promoções e usuários do seu restaurante
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="categories" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="categories">Categorias</TabsTrigger>
                 <TabsTrigger value="products">Produtos</TabsTrigger>
                 <TabsTrigger value="promotions">Promoções</TabsTrigger>
+                <TabsTrigger value="users">Usuários</TabsTrigger>
               </TabsList>
               
               <TabsContent value="categories" className="mt-6">
@@ -78,6 +80,10 @@ const Admin = () => {
               
               <TabsContent value="promotions" className="mt-6">
                 <PromotionManager />
+              </TabsContent>
+
+              <TabsContent value="users" className="mt-6">
+                <UserManager />
               </TabsContent>
             </Tabs>
           </CardContent>

@@ -200,7 +200,7 @@ const ProductManager = () => {
         <Button
           onClick={() => setShowAddForm(true)}
           className="bg-red-600 hover:bg-red-700"
-          disabled={showAddForm || editingId}
+          disabled={showAddForm || Boolean(editingId)}
         >
           <Plus size={16} className="mr-2" />
           Novo Produto
@@ -355,7 +355,7 @@ const ProductManager = () => {
                           size="sm"
                           variant="outline"
                           className="text-red-600 hover:text-red-700"
-                          disabled={editingId || showAddForm}
+                          disabled={Boolean(editingId) || showAddForm}
                         >
                           <Trash2 size={14} />
                         </Button>

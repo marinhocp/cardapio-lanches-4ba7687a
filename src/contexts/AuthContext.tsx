@@ -12,6 +12,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  userStatus: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userStatus, setUserStatus] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,23 +41,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Check if user is admin
+          // Check user profile
           setTimeout(async () => {
             try {
               const { data: profile } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('user_type, status')
                 .eq('id', session.user.id)
                 .single();
               
-              setIsAdmin(profile?.role === 'admin');
+              if (profile) {
+                setIsAdmin(profile.user_type === 'admin' && profile.status === 'approved');
+                setUserStatus(profile.status);
+                
+                // Show message if user is not approved
+                if (profile.status === 'pending') {
+                  toast({
+                    title: "Conta pendente de aprovação",
+                    description: "Sua conta está aguardando aprovação por um administrador.",
+                    variant: "default",
+                  });
+                } else if (profile.status === 'rejected') {
+                  toast({
+                    title: "Conta rejeitada",
+                    description: "Sua conta foi rejeitada. Entre em contato com o suporte.",
+                    variant: "destructive",
+                  });
+                } else if (profile.status === 'suspended') {
+                  toast({
+                    title: "Conta suspensa",
+                    description: "Sua conta foi suspensa. Entre em contato com o suporte.",
+                    variant: "destructive",
+                  });
+                }
+              } else {
+                setIsAdmin(false);
+                setUserStatus(null);
+              }
             } catch (error) {
               console.log('Error fetching user profile:', error);
               setIsAdmin(false);
+              setUserStatus(null);
             }
           }, 0);
         } else {
           setIsAdmin(false);
+          setUserStatus(null);
         }
         
         setLoading(false);
@@ -124,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         toast({
           title: "Cadastro realizado!",
-          description: "Verifique seu email para confirmar a conta.",
+          description: "Verifique seu email para confirmar a conta. Após confirmação, aguarde aprovação.",
         });
       }
       
@@ -165,6 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     isAdmin,
+    userStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
