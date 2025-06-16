@@ -1,7 +1,10 @@
 
 import React from 'react';
-import { ShoppingCart, Menu } from 'lucide-react';
+import { ShoppingCart, Menu, User, LogIn, Settings } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   onCartClick: () => void;
@@ -16,6 +19,7 @@ const menuCategories = [
 
 const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
   const { itemCount } = useCart();
+  const { user, isAdmin, signOut } = useAuth();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -49,18 +53,59 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
           ))}
         </nav>
         
-        <button
-          onClick={onCartClick}
-          className="relative bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
-        >
-          <ShoppingCart size={20} />
-          <span className="hidden sm:inline">Ir para o Carrinho</span>
-          {itemCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-yellow-400 text-red-600 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-              {itemCount}
-            </span>
+        <div className="flex items-center gap-2">
+          {/* Authentication and Admin buttons */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-yellow-400 text-red-600 border-yellow-400 hover:bg-yellow-500 flex items-center gap-1"
+                  >
+                    <Settings size={16} />
+                    <span className="hidden sm:inline">Admin</span>
+                  </Button>
+                </Link>
+              )}
+              <Button
+                onClick={signOut}
+                variant="outline"
+                size="sm"
+                className="bg-white text-red-600 border-white hover:bg-gray-100 flex items-center gap-1"
+              >
+                <User size={16} />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </div>
+          ) : (
+            <Link to="/auth">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white text-red-600 border-white hover:bg-gray-100 flex items-center gap-1"
+              >
+                <LogIn size={16} />
+                <span className="hidden sm:inline">Entrar</span>
+              </Button>
+            </Link>
           )}
-        </button>
+          
+          {/* Cart button */}
+          <button
+            onClick={onCartClick}
+            className="relative bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
+          >
+            <ShoppingCart size={20} />
+            <span className="hidden sm:inline">Carrinho</span>
+            {itemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-yellow-400 text-red-600 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     </header>
   );
