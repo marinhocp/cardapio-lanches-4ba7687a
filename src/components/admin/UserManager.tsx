@@ -46,7 +46,7 @@ const UserManager = () => {
     }
   };
 
-  const updateUserStatus = async (userId: string, status: string) => {
+  const updateUserStatus = async (userId: string, status: 'pending' | 'approved' | 'rejected' | 'suspended') => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -70,7 +70,7 @@ const UserManager = () => {
     }
   };
 
-  const updateUserType = async (userId: string, userType: string) => {
+  const updateUserType = async (userId: string, userType: 'admin' | 'user') => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -196,7 +196,7 @@ const UserManager = () => {
 
                         <Select
                           value={user.user_type}
-                          onValueChange={(value) => updateUserType(user.id, value)}
+                          onValueChange={(value: 'admin' | 'user') => updateUserType(user.id, value)}
                         >
                           <SelectTrigger className="w-32">
                             <div className="flex items-center gap-1">
