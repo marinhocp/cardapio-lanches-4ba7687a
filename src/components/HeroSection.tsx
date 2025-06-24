@@ -1,22 +1,63 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { supabase } from '../integrations/supabase/client';
+
+interface Promotion {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image: string | null;
+  active: boolean;
+  valid_until: string | null;
+}
 
 const HeroSection = () => {
   const { addItem } = useCart();
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddPromoToCart = () => {
+  useEffect(() => {
+    fetchActivePromotions();
+  }, []);
+
+  const fetchActivePromotions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('*')
+        .eq('active', true)
+        .or(`valid_until.is.null,valid_until.gte.${new Date().toISOString().split('T')[0]}`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar promoções:', error);
+        return;
+      }
+
+      setPromotions(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar promoções:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddPromotionToCart = (promotion: Promotion) => {
     const promoItem = {
-      id: 'promo-x-tudo-combo',
-      name: 'Combo X-TUDO + Batata + Refrigerante',
-      price: 25.90,
-      image: '/placeholder.svg',
-      description: 'Promoção especial do dia! Combo completo com X-TUDO, batata frita e refrigerante.'
+      id: promotion.id,
+      name: promotion.name,
+      price: promotion.price,
+      image: promotion.image || '/placeholder.svg',
+      description: promotion.description || 'Promoção especial!'
     };
     
     addItem(promoItem);
   };
+
+  const activePromotion = promotions.length > 0 ? promotions[0] : null;
 
   return (
     <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
@@ -30,22 +71,44 @@ const HeroSection = () => {
             Experimente nossos hamburgers artesanais feitos com muito carinho.
           </p>
           
-          <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-            <h3 className="text-2xl font-bold mb-2">🔥 PROMOÇÃO DO DIA</h3>
-            <p className="text-lg font-semibold">
-              Combo X-TUDO + Batata + Refrigerante
-            </p>
-            <p className="text-3xl font-bold mb-3">R$ 25,90</p>
-            <p className="text-sm mb-4">*Válida apenas hoje!</p>
-            
-            <button
-              onClick={handleAddPromoToCart}
-              className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto"
-            >
-              <ShoppingCart size={20} />
-              Adicionar ao Carrinho
-            </button>
-          </div>
+          {loading ? (
+            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-lg">Carregando promoções...</p>
+            </div>
+          ) : activePromotion ? (
+            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+              <h3 className="text-2xl font-bold mb-2">🔥 PROMOÇÃO DO DIA</h3>
+              <p className="text-lg font-semibold">
+                {activePromotion.name}
+              </p>
+              <p className="text-3xl font-bold mb-3">
+                R$ {activePromotion.price.toFixed(2).replace('.', ',')}
+              </p>
+              {activePromotion.description && (
+                <p className="text-sm mb-3">{activePromotion.description}</p>
+              )}
+              {activePromotion.valid_until && (
+                <p className="text-sm mb-4">
+                  *Válida até {new Date(activePromotion.valid_until).toLocaleDateString('pt-BR')}!
+                </p>
+              )}
+              
+              <button
+                onClick={() => handleAddPromotionToCart(activePromotion)}
+                className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto"
+              >
+                <ShoppingCart size={20} />
+                Adicionar ao Carrinho
+              </button>
+            </div>
+          ) : (
+            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+              <h3 className="text-2xl font-bold mb-2">🍔 HAMBURGERS ARTESANAIS</h3>
+              <p className="text-lg">
+                Confira nosso cardápio completo com os melhores sabores!
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
