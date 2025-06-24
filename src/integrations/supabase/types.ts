@@ -354,6 +354,14 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_status: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_page_parents: {
         Args: { page_id: number }
         Returns: {
