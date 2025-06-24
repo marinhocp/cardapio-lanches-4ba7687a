@@ -15,15 +15,29 @@ export const useAuthState = () => {
 
   const checkUserProfile = async (userId: string) => {
     try {
-      const { data: profile } = await supabase
+      console.log('Checking user profile for:', userId);
+      
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('user_type, status')
         .eq('id', userId)
         .single();
       
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        setIsAdmin(false);
+        setUserStatus(null);
+        return;
+      }
+      
       if (profile) {
-        setIsAdmin(profile.user_type === 'admin' && profile.status === 'approved');
+        console.log('User profile found:', profile);
+        const isUserAdmin = profile.user_type === 'admin' && profile.status === 'approved';
+        setIsAdmin(isUserAdmin);
         setUserStatus(profile.status);
+        
+        console.log('Is admin:', isUserAdmin);
+        console.log('User status:', profile.status);
         
         // Show message if user is not approved
         if (profile.status === 'pending') {
@@ -46,28 +60,32 @@ export const useAuthState = () => {
           });
         }
       } else {
+        console.log('No profile found for user');
         setIsAdmin(false);
         setUserStatus(null);
       }
     } catch (error) {
-      console.log('Error fetching user profile:', error);
+      console.error('Error in checkUserProfile:', error);
       setIsAdmin(false);
       setUserStatus(null);
     }
   };
 
   useEffect(() => {
+    console.log('Setting up auth state listener');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Check user profile
+          // Check user profile with a slight delay to ensure the profile exists
           setTimeout(async () => {
             await checkUserProfile(session.user.id);
-          }, 0);
+          }, 100);
         } else {
           setIsAdmin(false);
           setUserStatus(null);
@@ -79,8 +97,13 @@ export const useAuthState = () => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        checkUserProfile(session.user.id);
+      }
       setLoading(false);
     });
 

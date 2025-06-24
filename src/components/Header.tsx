@@ -19,7 +19,7 @@ const menuCategories = [
 
 const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
   const { itemCount } = useCart();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut, loading } = useAuth();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -32,6 +32,8 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
       });
     }
   };
+
+  console.log('Header render - User:', !!user, 'IsAdmin:', isAdmin, 'Loading:', loading);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-red-600 shadow-lg">
@@ -55,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
         
         <div className="flex items-center gap-2">
           {/* Authentication and Admin buttons */}
-          {user ? (
+          {user && !loading ? (
             <div className="flex items-center gap-2">
               {isAdmin && (
                 <Link to="/admin">
@@ -79,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
                 <span className="hidden sm:inline">Sair</span>
               </Button>
             </div>
-          ) : (
+          ) : !loading ? (
             <Link to="/auth">
               <Button
                 variant="outline"
@@ -90,6 +92,8 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
                 <span className="hidden sm:inline">Entrar</span>
               </Button>
             </Link>
+          ) : (
+            <div className="text-white text-sm">Carregando...</div>
           )}
           
           {/* Cart button */}
