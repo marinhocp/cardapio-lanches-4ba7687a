@@ -1,25 +1,67 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Menu, User, LogIn, Settings } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { supabase } from '../integrations/supabase/client';
 
 interface HeaderProps {
   onCartClick: () => void;
 }
 
-const menuCategories = [
-  { title: "Lanches Tradicionais", id: "lanches-tradicionais" },
-  { title: "Smash e Gourmet", id: "smash-gourmet" },
-  { title: "Frango e Especiais", id: "frango-especiais" },
-  { title: "Bebidas", id: "bebidas" }
-];
+interface Category {
+  id: string;
+  name: string;
+}
 
 const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
   const { itemCount } = useCart();
   const { user, isAdmin, signOut, loading } = useAuth();
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchActiveCategories();
+  }, []);
+
+  const fetchActiveCategories = async () => {
+    try {
+      // Buscar categorias que têm produtos ativos
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select(`
+          id,
+          name,
+          products!inner (
+            id
+          )
+        `)
+        .eq('products.active', true)
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Erro ao carregar categorias:', categoriesError);
+        return;
+      }
+
+      // Remover duplicatas (quando uma categoria tem múltiplos produtos)
+      const uniqueCategories = categoriesData?.reduce((acc: Category[], current) => {
+        const exists = acc.find(cat => cat.id === current.id);
+        if (!exists) {
+          acc.push({
+            id: current.id,
+            name: current.name
+          });
+        }
+        return acc;
+      }, []) || [];
+
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+    }
+  };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -44,13 +86,13 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
         
         {/* Menu de categorias - visível apenas no desktop */}
         <nav className="hidden lg:flex items-center space-x-6">
-          {menuCategories.map((category) => (
+          {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => scrollToSection(category.id)}
               className="text-white hover:text-yellow-300 transition-colors text-sm font-medium"
             >
-              {category.title}
+              {category.name}
             </button>
           ))}
         </nav>

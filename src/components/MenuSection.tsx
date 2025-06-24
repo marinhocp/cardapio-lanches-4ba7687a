@@ -1,123 +1,137 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
+import { supabase } from '../integrations/supabase/client';
 
-const menuCategories = [
-  {
-    title: "Lanches Tradicionais",
-    id: "lanches-tradicionais",
-    items: [
-      {
-        id: "1",
-        name: "X-BURGUER",
-        description: "Pão, hambúrguer artesanal, queijo, alface, tomate e molho especial",
-        price: 18.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      },
-      {
-        id: "2",
-        name: "X-SALADA",
-        description: "Pão, hambúrguer artesanal, queijo, alface, tomate, cebola e molho especial",
-        price: 20.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      },
-      {
-        id: "3",
-        name: "X-TUDO",
-        description: "Pão, hambúrguer artesanal, queijo, presunto, ovo, batata palha, alface, tomate, milho e molho especial",
-        price: 24.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      }
-    ]
-  },
-  {
-    title: "Smash e Gourmet",
-    id: "smash-gourmet",
-    items: [
-      {
-        id: "4",
-        name: "SMASH DUPLO",
-        description: "Pão brioche, dois hambúrgueres smash, queijo cheddar, cebola caramelizada e molho especial",
-        price: 28.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      },
-      {
-        id: "5",
-        name: "GOURMET BACON",
-        description: "Pão artesanal, hambúrguer 180g, queijo brie, bacon crocante, rúcula e geleia de pimenta",
-        price: 32.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      }
-    ]
-  },
-  {
-    title: "Frango e Especiais",
-    id: "frango-especiais",
-    items: [
-      {
-        id: "6",
-        name: "CHICKEN CRISPY",
-        description: "Pão, frango empanado crocante, queijo, alface, tomate e maionese temperada",
-        price: 22.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      },
-      {
-        id: "7",
-        name: "VEGGIE BURGER",
-        description: "Pão integral, hambúrguer de grão-de-bico, queijo vegano, alface, tomate e molho tahine",
-        price: 26.90,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop"
-      }
-    ]
-  },
-  {
-    title: "Bebidas",
-    id: "bebidas",
-    items: [
-      {
-        id: "8",
-        name: "Coca-Cola 2L",
-        description: "Refrigerante Coca-Cola 2 litros gelado",
-        price: 8.90,
-        image: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=300&fit=crop"
-      },
-      {
-        id: "9",
-        name: "Suco Natural 500ml",
-        description: "Suco natural de laranja, limão ou maracujá - 500ml",
-        price: 6.90,
-        image: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=300&fit=crop"
-      },
-      {
-        id: "10",
-        name: "Água Mineral 500ml",
-        description: "Água mineral sem gás 500ml gelada",
-        price: 3.90,
-        image: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=300&fit=crop"
-      }
-    ]
-  }
-];
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image: string | null;
+  category_id: string | null;
+  active: boolean;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  products?: Product[];
+}
 
 interface MenuSectionProps {
   onProductClick: (product: any) => void;
 }
 
 const MenuSection: React.FC<MenuSectionProps> = ({ onProductClick }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategoriesWithProducts();
+  }, []);
+
+  const fetchCategoriesWithProducts = async () => {
+    try {
+      // Buscar categorias
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Erro ao carregar categorias:', categoriesError);
+        return;
+      }
+
+      // Buscar produtos ativos
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('active', true)
+        .order('name');
+
+      if (productsError) {
+        console.error('Erro ao carregar produtos:', productsError);
+        return;
+      }
+
+      // Agrupar produtos por categoria
+      const categoriesWithProducts = categoriesData?.map(category => ({
+        ...category,
+        products: productsData?.filter(product => product.category_id === category.id) || []
+      })) || [];
+
+      // Filtrar apenas categorias que têm produtos
+      const categoriesWithActiveProducts = categoriesWithProducts.filter(
+        category => category.products && category.products.length > 0
+      );
+
+      setCategories(categoriesWithActiveProducts);
+    } catch (error) {
+      console.error('Erro ao buscar dados:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-lg text-gray-600">Carregando cardápio...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (categories.length === 0) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">Cardápio</h2>
+            <p className="text-lg text-gray-600">Nenhum produto disponível no momento.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        {menuCategories.map((category, index) => (
-          <div key={index} id={category.id} className="mb-16 scroll-mt-24">
+        {categories.map((category) => (
+          <div key={category.id} id={category.id} className="mb-16 scroll-mt-24">
             <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-              {category.title}
+              {category.name}
             </h2>
+            {category.description && (
+              <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+                {category.description}
+              </p>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {category.items.map((item) => (
+              {category.products?.map((product) => (
                 <ProductCard
-                  key={item.id}
-                  product={item}
-                  onClick={() => onProductClick(item)}
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    description: product.description || '',
+                    price: Number(product.price),
+                    image: product.image || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop'
+                  }}
+                  onClick={() => onProductClick({
+                    id: product.id,
+                    name: product.name,
+                    description: product.description || '',
+                    price: Number(product.price),
+                    image: product.image || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop'
+                  })}
                 />
               ))}
             </div>
