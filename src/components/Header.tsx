@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Menu, User, LogIn, Settings } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
@@ -18,6 +19,14 @@ interface Category {
 
 interface CompanyInfo {
   name: string;
+  description?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  logo_url?: string;
+  banner_url?: string;
+  opening_hours?: any;
+  social_media?: any;
 }
 
 const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
@@ -35,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
     try {
       const { data, error } = await supabase
         .from('company_info')
-        .select('name')
+        .select('*')
         .maybeSingle();
 
       if (error) {
@@ -43,9 +52,9 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
         return;
       }
 
-      // Use company name from database or default
-      if (data?.name) {
-        setCompanyInfo({ name: data.name });
+      // Use company info from database or default
+      if (data) {
+        setCompanyInfo(data);
       }
     } catch (error) {
       console.error('Erro ao buscar informações da empresa:', error);
