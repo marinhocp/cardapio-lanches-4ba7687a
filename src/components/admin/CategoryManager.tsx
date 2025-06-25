@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface Category {
   id: string;
   name: string;
   description: string | null;
+  display_order: number;
   created_at: string;
 }
 
@@ -34,7 +35,7 @@ const CategoryManager = () => {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('display_order');
 
       if (error) throw error;
       setCategories(data || []);
@@ -69,12 +70,21 @@ const CategoryManager = () => {
           description: "A categoria foi atualizada com sucesso!",
         });
       } else {
-        // Create new category
+        // Create new category - get the next display_order
+        const { data: maxOrderData } = await supabase
+          .from('categories')
+          .select('display_order')
+          .order('display_order', { ascending: false })
+          .limit(1);
+
+        const nextOrder = (maxOrderData?.[0]?.display_order || 0) + 1;
+
         const { error } = await supabase
           .from('categories')
           .insert({
             name: formData.name,
             description: formData.description || null,
+            display_order: nextOrder,
           });
 
         if (error) throw error;
@@ -123,6 +133,50 @@ const CategoryManager = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao excluir categoria",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const moveCategory = async (categoryId: string, direction: 'up' | 'down') => {
+    try {
+      const currentIndex = categories.findIndex(cat => cat.id === categoryId);
+      if (
+        (direction === 'up' && currentIndex === 0) ||
+        (direction === 'down' && currentIndex === categories.length - 1)
+      ) {
+        return;
+      }
+
+      const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      const currentCategory = categories[currentIndex];
+      const swapCategory = categories[swapIndex];
+
+      // Swap display_order values
+      const { error: error1 } = await supabase
+        .from('categories')
+        .update({ display_order: swapCategory.display_order })
+        .eq('id', currentCategory.id);
+
+      const { error: error2 } = await supabase
+        .from('categories')
+        .update({ display_order: currentCategory.display_order })
+        .eq('id', swapCategory.id);
+
+      if (error1 || error2) {
+        throw error1 || error2;
+      }
+
+      toast({
+        title: "Ordem atualizada",
+        description: "A ordem das categorias foi atualizada com sucesso!",
+      });
+
+      fetchCategories();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao reordenar categoria",
         description: error.message,
         variant: "destructive",
       });
@@ -216,6 +270,7 @@ const CategoryManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Ordem</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Data de Criação</TableHead>
@@ -223,8 +278,28 @@ const CategoryManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((category) => (
+                {categories.map((category, index) => (
                   <TableRow key={category.id}>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          onClick={() => moveCategory(category.id, 'up')}
+                          size="sm"
+                          variant="outline"
+                          disabled={index === 0 || Boolean(editingId) || showAddForm}
+                        >
+                          <ArrowUp size={14} />
+                        </Button>
+                        <Button
+                          onClick={() => moveCategory(category.id, 'down')}
+                          size="sm"
+                          variant="outline"
+                          disabled={index === categories.length - 1 || Boolean(editingId) || showAddForm}
+                        >
+                          <ArrowDown size={14} />
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">{category.name}</TableCell>
                     <TableCell>{category.description || '-'}</TableCell>
                     <TableCell>

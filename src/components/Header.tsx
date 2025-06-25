@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Menu, User, LogIn, Settings } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
@@ -14,31 +13,60 @@ interface HeaderProps {
 interface Category {
   id: string;
   name: string;
+  display_order: number;
+}
+
+interface CompanyInfo {
+  name: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
   const { itemCount } = useCart();
   const { user, isAdmin, signOut, loading } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({ name: '🍔 Burger House' });
 
   useEffect(() => {
     fetchActiveCategories();
+    fetchCompanyInfo();
   }, []);
+
+  const fetchCompanyInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_info')
+        .select('name')
+        .maybeSingle();
+
+      if (error) {
+        console.error('Erro ao carregar informações da empresa:', error);
+        return;
+      }
+
+      // Use company name from database or default
+      if (data?.name) {
+        setCompanyInfo({ name: data.name });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar informações da empresa:', error);
+    }
+  };
 
   const fetchActiveCategories = async () => {
     try {
-      // Buscar categorias que têm produtos ativos
+      // Buscar categorias que têm produtos ativos, ordenadas por display_order
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select(`
           id,
           name,
+          display_order,
           products!inner (
             id
           )
         `)
         .eq('products.active', true)
-        .order('name');
+        .order('display_order');
 
       if (categoriesError) {
         console.error('Erro ao carregar categorias:', categoriesError);
@@ -51,7 +79,8 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
         if (!exists) {
           acc.push({
             id: current.id,
-            name: current.name
+            name: current.name,
+            display_order: current.display_order
           });
         }
         return acc;
@@ -81,7 +110,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-red-600 shadow-lg">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-white">
-          🍔 Burger House
+          {companyInfo.name}
         </h1>
         
         {/* Menu de categorias - visível apenas no desktop */}

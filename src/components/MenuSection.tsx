@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { supabase } from '../integrations/supabase/client';
@@ -17,6 +16,7 @@ interface Category {
   id: string;
   name: string;
   description: string | null;
+  display_order: number;
   products?: Product[];
 }
 
@@ -34,11 +34,11 @@ const MenuSection: React.FC<MenuSectionProps> = ({ onProductClick }) => {
 
   const fetchCategoriesWithProducts = async () => {
     try {
-      // Buscar categorias
+      // Buscar categorias ordenadas por display_order
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
-        .order('name');
+        .order('display_order');
 
       if (categoriesError) {
         console.error('Erro ao carregar categorias:', categoriesError);
