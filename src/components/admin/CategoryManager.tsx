@@ -2,13 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Save, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import CategoryForm from './CategoryForm';
+import CategoryTable from './CategoryTable';
 
 interface Category {
   id: string;
@@ -50,9 +47,9 @@ const CategoryManager = () => {
     }
   };
 
-  const handleSave = async (id?: string) => {
+  const handleSave = async () => {
     try {
-      if (id) {
+      if (editingId) {
         // Update existing category
         const { error } = await supabase
           .from('categories')
@@ -61,7 +58,7 @@ const CategoryManager = () => {
             description: formData.description || null,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', id);
+          .eq('id', editingId);
 
         if (error) throw error;
         
@@ -193,6 +190,8 @@ const CategoryManager = () => {
     return <div className="text-center py-8">Carregando categorias...</div>;
   }
 
+  const isFormDisabled = Boolean(editingId) || showAddForm;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -200,7 +199,7 @@ const CategoryManager = () => {
         <Button
           onClick={() => setShowAddForm(true)}
           className="bg-red-600 hover:bg-red-700"
-          disabled={showAddForm || Boolean(editingId)}
+          disabled={isFormDisabled}
         >
           <Plus size={16} className="mr-2" />
           Nova Categoria
@@ -208,131 +207,22 @@ const CategoryManager = () => {
       </div>
 
       {(showAddForm || editingId) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {editingId ? 'Editar Categoria' : 'Nova Categoria'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome da categoria"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Descrição da categoria"
-                  className="resize-none"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 mt-4">
-              <Button
-                onClick={() => handleSave(editingId || undefined)}
-                className="bg-green-600 hover:bg-green-700"
-                disabled={!formData.name.trim()}
-              >
-                <Save size={16} className="mr-2" />
-                Salvar
-              </Button>
-              <Button
-                onClick={handleCancel}
-                variant="outline"
-              >
-                <X size={16} className="mr-2" />
-                Cancelar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <CategoryForm
+          formData={formData}
+          setFormData={setFormData}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          isEditing={Boolean(editingId)}
+        />
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Categorias Cadastradas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {categories.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Nenhuma categoria cadastrada.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ordem</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category, index) => (
-                  <TableRow key={category.id}>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          onClick={() => moveCategory(category.id, 'up')}
-                          size="sm"
-                          variant="outline"
-                          disabled={index === 0 || Boolean(editingId) || showAddForm}
-                        >
-                          <ArrowUp size={14} />
-                        </Button>
-                        <Button
-                          onClick={() => moveCategory(category.id, 'down')}
-                          size="sm"
-                          variant="outline"
-                          disabled={index === categories.length - 1 || Boolean(editingId) || showAddForm}
-                        >
-                          <ArrowDown size={14} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell>{category.description || '-'}</TableCell>
-                    <TableCell>
-                      {new Date(category.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleEdit(category)}
-                          size="sm"
-                          variant="outline"
-                          disabled={editingId === category.id || showAddForm}
-                        >
-                          <Edit size={14} />
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(category.id)}
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700"
-                          disabled={Boolean(editingId) || showAddForm}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <CategoryTable
+        categories={categories}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onMoveCategory={moveCategory}
+        disabled={isFormDisabled}
+      />
     </div>
   );
 };
