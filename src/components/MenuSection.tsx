@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { supabase } from '../integrations/supabase/client';
@@ -34,10 +35,12 @@ const MenuSection: React.FC<MenuSectionProps> = ({ onProductClick }) => {
 
   const fetchCategoriesWithProducts = async () => {
     try {
-      // Buscar categorias ordenadas por display_order
+      // Buscar categorias ordenadas por display_order, excluindo "adicionais"
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
+        .neq('name', 'Adicionais')
+        .neq('name', 'adicionais')
         .order('display_order');
 
       if (categoriesError) {
@@ -50,7 +53,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ onProductClick }) => {
         .from('products')
         .select('*')
         .eq('active', true)
-        .order('name');
+        .order('display_order');
 
       if (productsError) {
         console.error('Erro ao carregar produtos:', productsError);

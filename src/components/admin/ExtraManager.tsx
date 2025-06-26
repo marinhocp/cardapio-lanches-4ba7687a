@@ -5,35 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
-import ProductOrderControls from './ProductOrderControls';
+import { Plus, Edit, Trash2, Save, X, ArrowUp, ArrowDown } from 'lucide-react';
 
-interface Product {
+interface Extra {
   id: string;
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
-  category_id: string | null;
   active: boolean;
   display_order: number;
   created_at: string;
-  categories?: { name: string };
 }
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-const ProductManager = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+const ExtraManager = () => {
+  const [extras, setExtras] = useState<Extra[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -41,40 +30,26 @@ const ProductManager = () => {
     name: '',
     description: '',
     price: '',
-    image: '',
-    category_id: '',
     active: true
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchData();
+    fetchExtras();
   }, []);
 
-  const fetchData = async () => {
+  const fetchExtras = async () => {
     try {
-      const [productsResult, categoriesResult] = await Promise.all([
-        supabase
-          .from('products')
-          .select(`
-            *,
-            categories (name)
-          `)
-          .order('display_order'),
-        supabase
-          .from('categories')
-          .select('id, name')
-          .order('name')
-      ]);
+      const { data, error } = await supabase
+        .from('extras')
+        .select('*')
+        .order('display_order');
 
-      if (productsResult.error) throw productsResult.error;
-      if (categoriesResult.error) throw categoriesResult.error;
-
-      setProducts(productsResult.data || []);
-      setCategories(categoriesResult.data || []);
+      if (error) throw error;
+      setExtras(data || []);
     } catch (error: any) {
       toast({
-        title: "Erro ao carregar dados",
+        title: "Erro ao carregar extras",
         description: error.message,
         variant: "destructive",
       });
@@ -83,33 +58,29 @@ const ProductManager = () => {
     }
   };
 
-  const handleSave = async (id?: string) => {
+  const handleSave = async () => {
     try {
-      const productData = {
-        name: formData.name,
-        description: formData.description || null,
-        price: parseFloat(formData.price),
-        image: formData.image || null,
-        category_id: formData.category_id || null,
-        active: formData.active,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (id) {
+      if (editingId) {
         const { error } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', id);
+          .from('extras')
+          .update({
+            name: formData.name,
+            description: formData.description || null,
+            price: parseFloat(formData.price),
+            active: formData.active,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingId);
 
         if (error) throw error;
         
         toast({
-          title: "Produto atualizado",
-          description: "O produto foi atualizado com sucesso!",
+          title: "Extra atualizado",
+          description: "O extra foi atualizado com sucesso!",
         });
       } else {
         const { data: maxOrderData } = await supabase
-          .from('products')
+          .from('extras')
           .select('display_order')
           .order('display_order', { ascending: false })
           .limit(1);
@@ -117,101 +88,95 @@ const ProductManager = () => {
         const nextOrder = (maxOrderData?.[0]?.display_order || 0) + 1;
 
         const { error } = await supabase
-          .from('products')
+          .from('extras')
           .insert({
-            ...productData,
-            display_order: nextOrder
+            name: formData.name,
+            description: formData.description || null,
+            price: parseFloat(formData.price),
+            active: formData.active,
+            display_order: nextOrder,
           });
 
         if (error) throw error;
         
         toast({
-          title: "Produto criado",
-          description: "O produto foi criado com sucesso!",
+          title: "Extra criado",
+          description: "O extra foi criado com sucesso!",
         });
       }
 
-      setFormData({
-        name: '',
-        description: '',
-        price: '',
-        image: '',
-        category_id: '',
-        active: true
-      });
+      setFormData({ name: '', description: '', price: '', active: true });
       setEditingId(null);
       setShowAddForm(false);
-      fetchData();
+      fetchExtras();
     } catch (error: any) {
       toast({
-        title: "Erro ao salvar produto",
+        title: "Erro ao salvar extra",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (extra: Extra) => {
     setFormData({
-      name: product.name,
-      description: product.description || '',
-      price: product.price.toString(),
-      image: product.image || '',
-      category_id: product.category_id || '',
-      active: product.active
+      name: extra.name,
+      description: extra.description || '',
+      price: extra.price.toString(),
+      active: extra.active
     });
-    setEditingId(product.id);
+    setEditingId(extra.id);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    if (!confirm('Tem certeza que deseja excluir este extra?')) return;
 
     try {
       const { error } = await supabase
-        .from('products')
+        .from('extras')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
       
       toast({
-        title: "Produto excluído",
-        description: "O produto foi excluído com sucesso!",
+        title: "Extra excluído",
+        description: "O extra foi excluído com sucesso!",
       });
       
-      fetchData();
+      fetchExtras();
     } catch (error: any) {
       toast({
-        title: "Erro ao excluir produto",
+        title: "Erro ao excluir extra",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const moveProduct = async (productId: string, direction: 'up' | 'down') => {
+  const moveExtra = async (extraId: string, direction: 'up' | 'down') => {
     try {
-      const currentIndex = products.findIndex(product => product.id === productId);
+      const currentIndex = extras.findIndex(extra => extra.id === extraId);
       if (
         (direction === 'up' && currentIndex === 0) ||
-        (direction === 'down' && currentIndex === products.length - 1)
+        (direction === 'down' && currentIndex === extras.length - 1)
       ) {
         return;
       }
 
       const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-      const currentProduct = products[currentIndex];
-      const swapProduct = products[swapIndex];
+      const currentExtra = extras[currentIndex];
+      const swapExtra = extras[swapIndex];
 
       const { error: error1 } = await supabase
-        .from('products')
-        .update({ display_order: swapProduct.display_order })
-        .eq('id', currentProduct.id);
+        .from('extras')
+        .update({ display_order: swapExtra.display_order })
+        .eq('id', currentExtra.id);
 
       const { error: error2 } = await supabase
-        .from('products')
-        .update({ display_order: currentProduct.display_order })
-        .eq('id', swapProduct.id);
+        .from('extras')
+        .update({ display_order: currentExtra.display_order })
+        .eq('id', swapExtra.id);
 
       if (error1 || error2) {
         throw error1 || error2;
@@ -219,13 +184,13 @@ const ProductManager = () => {
 
       toast({
         title: "Ordem atualizada",
-        description: "A ordem dos produtos foi atualizada com sucesso!",
+        description: "A ordem dos extras foi atualizada com sucesso!",
       });
 
-      fetchData();
+      fetchExtras();
     } catch (error: any) {
       toast({
-        title: "Erro ao reordenar produto",
+        title: "Erro ao reordenar extra",
         description: error.message,
         variant: "destructive",
       });
@@ -233,33 +198,28 @@ const ProductManager = () => {
   };
 
   const handleCancel = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      image: '',
-      category_id: '',
-      active: true
-    });
+    setFormData({ name: '', description: '', price: '', active: true });
     setEditingId(null);
     setShowAddForm(false);
   };
 
   if (loading) {
-    return <div className="text-center py-8">Carregando produtos...</div>;
+    return <div className="text-center py-8">Carregando extras...</div>;
   }
+
+  const isFormDisabled = Boolean(editingId) || showAddForm;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Gerenciar Produtos</h2>
+        <h2 className="text-xl font-semibold">Gerenciar Extras</h2>
         <Button
           onClick={() => setShowAddForm(true)}
           className="bg-red-600 hover:bg-red-700"
-          disabled={showAddForm || Boolean(editingId)}
+          disabled={isFormDisabled}
         >
           <Plus size={16} className="mr-2" />
-          Novo Produto
+          Novo Extra
         </Button>
       </div>
 
@@ -267,7 +227,7 @@ const ProductManager = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {editingId ? 'Editar Produto' : 'Novo Produto'}
+              {editingId ? 'Editar Extra' : 'Novo Extra'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -278,7 +238,7 @@ const ProductManager = () => {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome do produto"
+                  placeholder="Nome do extra"
                   required
                 />
               </div>
@@ -295,40 +255,13 @@ const ProductManager = () => {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select
-                  value={formData.category_id}
-                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="image">URL da Imagem</Label>
-                <Input
-                  id="image"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
-              </div>
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="description">Descrição</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Descrição do produto"
+                  placeholder="Descrição do extra"
                   className="resize-none"
                   rows={3}
                 />
@@ -339,12 +272,12 @@ const ProductManager = () => {
                   checked={formData.active}
                   onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
                 />
-                <Label htmlFor="active">Produto ativo</Label>
+                <Label htmlFor="active">Extra ativo</Label>
               </div>
             </div>
             <div className="flex gap-2 mt-4">
               <Button
-                onClick={() => handleSave(editingId || undefined)}
+                onClick={handleSave}
                 className="bg-green-600 hover:bg-green-700"
                 disabled={!formData.name.trim() || !formData.price}
               >
@@ -365,17 +298,16 @@ const ProductManager = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Produtos Cadastrados</CardTitle>
+          <CardTitle>Extras Cadastrados</CardTitle>
         </CardHeader>
         <CardContent>
-          {products.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Nenhum produto cadastrado.</p>
+          {extras.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">Nenhum extra cadastrado.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Categoria</TableHead>
                   <TableHead>Preço</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ordem</TableHead>
@@ -383,41 +315,51 @@ const ProductManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product, index) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.categories?.name || '-'}</TableCell>
-                    <TableCell>R$ {product.price.toFixed(2).replace('.', ',')}</TableCell>
+                {extras.map((extra, index) => (
+                  <TableRow key={extra.id}>
+                    <TableCell className="font-medium">{extra.name}</TableCell>
+                    <TableCell>R$ {extra.price.toFixed(2).replace('.', ',')}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        product.active 
+                        extra.active 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {product.active ? 'Ativo' : 'Inativo'}
+                        {extra.active ? 'Ativo' : 'Inativo'}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <ProductOrderControls
-                        productId={product.id}
-                        index={index}
-                        totalProducts={products.length}
-                        onMoveProduct={moveProduct}
-                        disabled={Boolean(editingId) || showAddForm}
-                      />
+                      <div className="flex gap-1">
+                        <Button
+                          onClick={() => moveExtra(extra.id, 'up')}
+                          size="sm"
+                          variant="outline"
+                          disabled={index === 0 || isFormDisabled}
+                        >
+                          <ArrowUp size={14} />
+                        </Button>
+                        <Button
+                          onClick={() => moveExtra(extra.id, 'down')}
+                          size="sm"
+                          variant="outline"
+                          disabled={index === extras.length - 1 || isFormDisabled}
+                        >
+                          <ArrowDown size={14} />
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => handleEdit(product)}
+                          onClick={() => handleEdit(extra)}
                           size="sm"
                           variant="outline"
-                          disabled={editingId === product.id || showAddForm}
+                          disabled={editingId === extra.id || showAddForm}
                         >
                           <Edit size={14} />
                         </Button>
                         <Button
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => handleDelete(extra.id)}
                           size="sm"
                           variant="outline"
                           className="text-red-600 hover:text-red-700"
@@ -438,4 +380,4 @@ const ProductManager = () => {
   );
 };
 
-export default ProductManager;
+export default ExtraManager;

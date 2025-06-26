@@ -2,6 +2,7 @@
 import React from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { showToast } from '../utils/toast';
 
 interface Product {
   id: string;
@@ -22,6 +23,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addItem(product);
+    showToast(`${product.name} adicionado ao carrinho!`, 'success');
   };
 
   return (

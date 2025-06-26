@@ -50,6 +50,7 @@ export type Database = {
           phone: string | null
           social_media: Json | null
           updated_at: string
+          webhook_url: string | null
         }
         Insert: {
           address?: string | null
@@ -64,6 +65,7 @@ export type Database = {
           phone?: string | null
           social_media?: Json | null
           updated_at?: string
+          webhook_url?: string | null
         }
         Update: {
           address?: string | null
@@ -77,6 +79,40 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           social_media?: Json | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      extras: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          price?: number
           updated_at?: string
         }
         Relationships: []
@@ -105,6 +141,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          display_order: number | null
           id: string
           image: string | null
           name: string
@@ -116,6 +153,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           id?: string
           image?: string | null
           name: string
@@ -127,6 +165,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           id?: string
           image?: string | null
           name?: string

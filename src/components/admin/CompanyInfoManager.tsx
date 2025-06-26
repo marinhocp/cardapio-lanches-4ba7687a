@@ -18,6 +18,7 @@ interface CompanyInfo {
   address: string | null;
   logo_url: string | null;
   banner_url: string | null;
+  webhook_url: string | null;
   opening_hours: any;
   social_media: any;
 }
@@ -87,6 +88,24 @@ const CompanyInfoManager = () => {
     setCompanyInfo({ ...companyInfo, [field]: value });
   };
 
+  const updateOpeningHours = (day: string, hours: string) => {
+    if (!companyInfo) return;
+    const currentHours = companyInfo.opening_hours || {};
+    setCompanyInfo({
+      ...companyInfo,
+      opening_hours: { ...currentHours, [day]: hours }
+    });
+  };
+
+  const updateSocialMedia = (platform: string, url: string) => {
+    if (!companyInfo) return;
+    const currentSocial = companyInfo.social_media || {};
+    setCompanyInfo({
+      ...companyInfo,
+      social_media: { ...currentSocial, [platform]: url }
+    });
+  };
+
   if (loading) {
     return <div className="text-center py-8">Carregando informações da empresa...</div>;
   }
@@ -138,14 +157,24 @@ const CompanyInfoManager = () => {
             </div>
             
             <div>
-              <Label htmlFor="address">Endereço</Label>
+              <Label htmlFor="webhook_url">URL do Webhook</Label>
               <Input
-                id="address"
-                value={companyInfo?.address || ''}
-                onChange={(e) => updateField('address', e.target.value)}
-                placeholder="Rua, número - Bairro"
+                id="webhook_url"
+                value={companyInfo?.webhook_url || ''}
+                onChange={(e) => updateField('webhook_url', e.target.value)}
+                placeholder="https://example.com/webhook"
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="address">Endereço</Label>
+            <Input
+              id="address"
+              value={companyInfo?.address || ''}
+              onChange={(e) => updateField('address', e.target.value)}
+              placeholder="Rua, número - Bairro"
+            />
           </div>
 
           <div>
@@ -180,21 +209,76 @@ const CompanyInfoManager = () => {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSave} 
-              disabled={saving}
-              className="flex items-center gap-2"
-            >
-              <Save size={16} />
-              {saving ? 'Salvando...' : 'Salvar Alterações'}
-            </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Horário de Funcionamento</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { key: 'segunda', label: 'Segunda-feira' },
+              { key: 'terca', label: 'Terça-feira' },
+              { key: 'quarta', label: 'Quarta-feira' },
+              { key: 'quinta', label: 'Quinta-feira' },
+              { key: 'sexta', label: 'Sexta-feira' },
+              { key: 'sabado', label: 'Sábado' },
+              { key: 'domingo', label: 'Domingo' }
+            ].map((day) => (
+              <div key={day.key}>
+                <Label htmlFor={day.key}>{day.label}</Label>
+                <Input
+                  id={day.key}
+                  value={companyInfo?.opening_hours?.[day.key] || ''}
+                  onChange={(e) => updateOpeningHours(day.key, e.target.value)}
+                  placeholder="18h às 23h"
+                />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Redes Sociais</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { key: 'facebook', label: 'Facebook' },
+              { key: 'instagram', label: 'Instagram' },
+              { key: 'whatsapp', label: 'WhatsApp' },
+              { key: 'twitter', label: 'Twitter' }
+            ].map((social) => (
+              <div key={social.key}>
+                <Label htmlFor={social.key}>{social.label}</Label>
+                <Input
+                  id={social.key}
+                  value={companyInfo?.social_media?.[social.key] || ''}
+                  onChange={(e) => updateSocialMedia(social.key, e.target.value)}
+                  placeholder={`URL do ${social.label}`}
+                />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="flex items-center gap-2"
+        >
+          <Save size={16} />
+          {saving ? 'Salvando...' : 'Salvar Alterações'}
+        </Button>
+      </div>
     </div>
   );
 };
 
-export default CompanyInfoManager;
+export default ExtraManager;

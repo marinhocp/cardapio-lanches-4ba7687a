@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart } from 'lucide-react';
-import { useCart } from '../contexts/CartContext';
 import { supabase } from '../integrations/supabase/client';
+import PromotionModal from './PromotionModal';
 
 interface Promotion {
   id: string;
@@ -15,9 +14,9 @@ interface Promotion {
 }
 
 const HeroSection = () => {
-  const { addItem } = useCart();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
 
   useEffect(() => {
     fetchActivePromotions();
@@ -45,73 +44,67 @@ const HeroSection = () => {
     }
   };
 
-  const handleAddPromotionToCart = (promotion: Promotion) => {
-    const promoItem = {
-      id: promotion.id,
-      name: promotion.name,
-      price: promotion.price,
-      image: promotion.image || '/placeholder.svg',
-      description: promotion.description || 'Promoção especial!'
-    };
-    
-    addItem(promoItem);
-  };
-
   const activePromotion = promotions.length > 0 ? promotions[0] : null;
 
   return (
-    <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Os Melhores Burgers da Cidade!
-          </h2>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Ingredientes frescos, sabor inigualável e entrega rápida. 
-            Experimente nossos hamburgers artesanais feitos com muito carinho.
-          </p>
-          
-          {loading ? (
-            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-lg">Carregando promoções...</p>
-            </div>
-          ) : activePromotion ? (
-            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-2xl font-bold mb-2">🔥 PROMOÇÃO DO DIA</h3>
-              <p className="text-lg font-semibold">
-                {activePromotion.name}
-              </p>
-              <p className="text-3xl font-bold mb-3">
-                R$ {activePromotion.price.toFixed(2).replace('.', ',')}
-              </p>
-              {activePromotion.description && (
-                <p className="text-sm mb-3">{activePromotion.description}</p>
-              )}
-              {activePromotion.valid_until && (
-                <p className="text-sm mb-4">
-                  *Válida até {new Date(activePromotion.valid_until).toLocaleDateString('pt-BR')}!
-                </p>
-              )}
-              
-              <button
-                onClick={() => handleAddPromotionToCart(activePromotion)}
-                className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto"
+    <>
+      <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h2 className="text-4xl md:text-6xl font-bold mb-6">
+              Os Melhores Burgers da Cidade!
+            </h2>
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+              Ingredientes frescos, sabor inigualável e entrega rápida. 
+              Experimente nossos hamburgers artesanais feitos com muito carinho.
+            </p>
+            
+            {loading ? (
+              <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+                <p className="text-lg">Carregando promoções...</p>
+              </div>
+            ) : activePromotion ? (
+              <div 
+                className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto cursor-pointer hover:bg-yellow-300 transition-colors"
+                onClick={() => setSelectedPromotion(activePromotion)}
               >
-                <ShoppingCart size={20} />
-                Adicionar ao Carrinho
-              </button>
-            </div>
-          ) : (
-            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-2xl font-bold mb-2">🍔 HAMBURGERS ARTESANAIS</h3>
-              <p className="text-lg">
-                Confira nosso cardápio completo com os melhores sabores!
-              </p>
-            </div>
-          )}
+                <h3 className="text-2xl font-bold mb-2">🔥 PROMOÇÃO DO DIA</h3>
+                <p className="text-lg font-semibold">
+                  {activePromotion.name}
+                </p>
+                <p className="text-3xl font-bold mb-3">
+                  R$ {activePromotion.price.toFixed(2).replace('.', ',')}
+                </p>
+                {activePromotion.description && (
+                  <p className="text-sm mb-3">{activePromotion.description}</p>
+                )}
+                {activePromotion.valid_until && (
+                  <p className="text-sm mb-4">
+                    *Válida até {new Date(activePromotion.valid_until).toLocaleDateString('pt-BR')}!
+                  </p>
+                )}
+                
+                <div className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors inline-block">
+                  Ver Promoção
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+                <h3 className="text-2xl font-bold mb-2">🍔 HAMBURGERS ARTESANAIS</h3>
+                <p className="text-lg">
+                  Confira nosso cardápio completo com os melhores sabores!
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <PromotionModal 
+        promotion={selectedPromotion}
+        onClose={() => setSelectedPromotion(null)}
+      />
+    </>
   );
 };
 

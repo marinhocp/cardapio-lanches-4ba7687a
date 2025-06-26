@@ -1,22 +1,106 @@
 
-import React, { useState } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Trash2, Edit } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { supabase } from '../integrations/supabase/client';
+import ExtraSelector from './ExtraSelector';
 
 interface CartProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface CompanyInfo {
+  webhook_url: string | null;
+}
+
+interface Extra {
+  id: string;
+  name: string;
+  price: number;
+}
+
 const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
-  const { items, removeItem, getTotal, clearCart } = useCart();
+  const { items, removeItem, updateItem, getTotal, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
+  const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [editObservations, setEditObservations] = useState('');
+  const [editExtras, setEditExtras] = useState<string[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [allExtras, setAllExtras] = useState<Extra[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCompanyInfo();
+      fetchExtras();
+    }
+  }, [isOpen]);
+
+  const fetchCompanyInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_info')
+        .select('webhook_url')
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      setCompanyInfo(data);
+    } catch (error) {
+      console.error('Erro ao buscar informações da empresa:', error);
+    }
+  };
+
+  const fetchExtras = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('extras')
+        .select('id, name, price')
+        .eq('active', true);
+
+      if (error) throw error;
+      setAllExtras(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar extras:', error);
+    }
+  };
 
   if (!isOpen) return null;
+
+  const startEdit = (item: any) => {
+    setEditingItem(item.id);
+    setEditObservations(item.observations || '');
+    setEditExtras(item.extras || []);
+  };
+
+  const saveEdit = () => {
+    if (editingItem) {
+      updateItem(editingItem, {
+        observations: editObservations,
+        extras: editExtras
+      });
+      setEditingItem(null);
+      setEditObservations('');
+      setEditExtras([]);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingItem(null);
+    setEditObservations('');
+    setEditExtras([]);
+  };
+
+  const getExtraNames = (extraIds: string[]) => {
+    return extraIds.map(id => {
+      const extra = allExtras.find(e => e.id === id);
+      return extra ? extra.name : '';
+    }).filter(Boolean);
+  };
 
   const handleSubmitOrder = async () => {
     if (!paymentMethod || !deliveryMethod) {
@@ -36,47 +120,77 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
     setIsSubmitting(true);
 
-    // Formatar mensagem do pedido
-    const orderItems = items.map(item => {
-      const quantity = items.filter(i => i.name === item.name && i.observations === item.observations).length;
-      const baseText = `• ${quantity} ${item.name}`;
-      return item.observations ? `${baseText} (${item.observations})` : baseText;
-    });
+    try {
+      // Formatar mensagem do pedido
+      const orderItems = items.map(item => {
+        let itemText = `• ${item.name}`;
+        
+        if (item.extras && item.extras.length > 0) {
+          const extraNames = getExtraNames(item.extras);
+          if (extraNames.length > 0) {
+            itemText += ` (+ ${extraNames.join(', ')})`;
+          }
+        }
+        
+        if (item.observations) {
+          itemText += ` - Obs: ${item.observations}`;
+        }
+        
+        return itemText;
+      });
 
-    // Remover duplicatas
-    const uniqueItems = [...new Set(orderItems)];
+      let orderMessage = `🍔 NOVO PEDIDO
 
-    let orderMessage = `Você adicionou ao seu pedido o seguinte:
-${uniqueItems.join('\n')}
+${orderItems.join('\n')}
 
-Forma de Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loja'}`;
+📍 Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loja'}`;
 
-    if (deliveryMethod === 'delivery') {
-      orderMessage += `\nEndereço: ${address}`;
+      if (deliveryMethod === 'delivery') {
+        orderMessage += `\n📌 Endereço: ${address}`;
+      }
+
+      orderMessage += `\n💳 Pagamento: ${paymentMethod}`;
+
+      if (paymentMethod === 'Pix') {
+        orderMessage += `\n📧 Email: ${email}`;
+      }
+
+      orderMessage += `\n\n💰 Total: R$ ${getTotal().toFixed(2).replace('.', ',')}`;
+
+      console.log('Pedido enviado:', orderMessage);
+
+      // Enviar para webhook se configurado
+      if (companyInfo?.webhook_url) {
+        try {
+          await fetch(companyInfo.webhook_url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            mode: 'no-cors',
+            body: JSON.stringify({
+              message: orderMessage,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+        } catch (error) {
+          console.error('Erro ao enviar webhook:', error);
+        }
+      }
+
+      alert('Pedido enviado com sucesso!');
+      clearCart();
+      setPaymentMethod('');
+      setDeliveryMethod('');
+      setAddress('');
+      setEmail('');
+      onClose();
+    } catch (error) {
+      console.error('Erro ao enviar pedido:', error);
+      alert('Erro ao enviar pedido. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    orderMessage += `\nForma de Pagamento: ${paymentMethod}`;
-
-    if (paymentMethod === 'Pix') {
-      orderMessage += `\nEmail: ${email}`;
-    }
-
-    console.log('Pedido enviado:', orderMessage);
-    
-    // Aqui você adicionaria a chamada para o webhook
-    // await fetch('URL_DO_WEBHOOK', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ message: orderMessage }),
-    // });
-
-    alert('Pedido enviado com sucesso!');
-    clearCart();
-    setPaymentMethod('');
-    setDeliveryMethod('');
-    setAddress('');
-    setEmail('');
-    setIsSubmitting(false);
-    onClose();
   };
 
   return (
@@ -98,20 +212,78 @@ Forma de Entrega: ${deliveryMethod === 'delivery' ? 'Entregar' : 'Retirar na loj
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                    {item.observations && (
-                      <p className="text-sm text-gray-600 mt-1">Obs: {item.observations}</p>
-                    )}
-                    <p className="text-red-600 font-bold">R$ {item.price.toFixed(2).replace('.', ',')}</p>
-                  </div>
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-red-500 hover:text-red-700 p-2"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                <div key={item.id} className="bg-gray-50 p-4 rounded-lg">
+                  {editingItem === item.id ? (
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                      
+                      <ExtraSelector
+                        selectedExtras={editExtras}
+                        onExtrasChange={setEditExtras}
+                      />
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Observações
+                        </label>
+                        <textarea
+                          value={editObservations}
+                          onChange={(e) => setEditObservations(e.target.value)}
+                          placeholder="Observações..."
+                          className="w-full p-2 border border-gray-300 rounded text-sm resize-none"
+                          rows={2}
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={saveEdit}
+                          className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                        
+                        {item.extras && item.extras.length > 0 && (
+                          <p className="text-sm text-blue-600 mt-1">
+                            Extras: {getExtraNames(item.extras).join(', ')}
+                          </p>
+                        )}
+                        
+                        {item.observations && (
+                          <p className="text-sm text-gray-600 mt-1">Obs: {item.observations}</p>
+                        )}
+                        
+                        <p className="text-red-600 font-bold">R$ {item.price.toFixed(2).replace('.', ',')}</p>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(item)}
+                          className="text-blue-500 hover:text-blue-700 p-2"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-red-500 hover:text-red-700 p-2"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

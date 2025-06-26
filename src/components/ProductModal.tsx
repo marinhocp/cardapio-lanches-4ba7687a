@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import ExtraSelector from './ExtraSelector';
 
 interface Product {
   id: string;
@@ -18,13 +19,19 @@ interface ProductModalProps {
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const [observations, setObservations] = useState('');
+  const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const { addItem } = useCart();
 
   if (!product) return null;
 
   const handleAddToCart = () => {
-    addItem({ ...product, observations });
+    addItem({ 
+      ...product, 
+      observations,
+      extras: selectedExtras 
+    });
     setObservations('');
+    setSelectedExtras([]);
     onClose();
   };
 
@@ -49,6 +56,13 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
         <div className="p-6">
           <h2 className="text-3xl font-bold mb-4 text-gray-800">{product.name}</h2>
           <p className="text-gray-600 mb-6 text-lg">{product.description}</p>
+          
+          <div className="mb-6">
+            <ExtraSelector
+              selectedExtras={selectedExtras}
+              onExtrasChange={setSelectedExtras}
+            />
+          </div>
           
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
