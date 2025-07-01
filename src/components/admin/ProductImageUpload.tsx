@@ -121,7 +121,7 @@ const ProductImageUpload: React.FC<ProductImageUploadProps> = ({ value, onChange
         type="file"
         accept="image/*"
         onChange={handleFileUpload}
-        className="hidden"
+        style={{ display: 'none' }}
       />
       
       {value && (

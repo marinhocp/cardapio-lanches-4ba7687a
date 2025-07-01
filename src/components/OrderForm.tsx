@@ -6,10 +6,12 @@ interface OrderFormProps {
   deliveryMethod: string;
   address: string;
   email: string;
+  changeAmount: string;
   onPaymentMethodChange: (method: string) => void;
   onDeliveryMethodChange: (method: string) => void;
   onAddressChange: (address: string) => void;
   onEmailChange: (email: string) => void;
+  onChangeAmountChange: (amount: string) => void;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -17,10 +19,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
   deliveryMethod,
   address,
   email,
+  changeAmount,
   onPaymentMethodChange,
   onDeliveryMethodChange,
   onAddressChange,
-  onEmailChange
+  onEmailChange,
+  onChangeAmountChange
 }) => {
   return (
     <div className="space-y-4">
@@ -50,6 +54,20 @@ const OrderForm: React.FC<OrderFormProps> = ({
               value={email}
               onChange={(e) => onEmailChange(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-red-600 focus:outline-none"
+            />
+          </div>
+        )}
+
+        {paymentMethod === 'Dinheiro' && (
+          <div className="mt-3">
+            <input
+              type="number"
+              placeholder="Troco para quanto? (Ex: 50.00)"
+              value={changeAmount}
+              onChange={(e) => onChangeAmountChange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-red-600 focus:outline-none"
+              step="0.01"
+              min="0"
             />
           </div>
         )}

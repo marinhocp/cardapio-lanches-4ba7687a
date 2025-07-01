@@ -31,6 +31,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
+  const [changeAmount, setChangeAmount] = useState('');
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [allExtras, setAllExtras] = useState<Extra[]>([]);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -113,6 +114,11 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       return;
     }
 
+    if (paymentMethod === 'Dinheiro' && changeAmount && parseFloat(changeAmount) < getTotalWithExtras()) {
+      alert('O valor do troco deve ser maior ou igual ao total do pedido.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -155,6 +161,10 @@ ${orderItems.join('\n')}
         orderMessage += `\n📧 Email: ${email}`;
       }
 
+      if (paymentMethod === 'Dinheiro' && changeAmount) {
+        orderMessage += `\n💰 Troco para: R$ ${parseFloat(changeAmount).toFixed(2).replace('.', ',')}`;
+      }
+
       if (cliente) {
         orderMessage += `\n👤 Cliente: ${cliente}`;
       }
@@ -191,6 +201,7 @@ ${orderItems.join('\n')}
       setDeliveryMethod('');
       setAddress('');
       setEmail('');
+      setChangeAmount('');
       setShowSuccessMessage(true);
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
@@ -252,10 +263,12 @@ ${orderItems.join('\n')}
                 deliveryMethod={deliveryMethod}
                 address={address}
                 email={email}
+                changeAmount={changeAmount}
                 onPaymentMethodChange={setPaymentMethod}
                 onDeliveryMethodChange={setDeliveryMethod}
                 onAddressChange={setAddress}
                 onEmailChange={setEmail}
+                onChangeAmountChange={setChangeAmount}
               />
             </div>
           )}

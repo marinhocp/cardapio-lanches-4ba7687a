@@ -48,19 +48,23 @@ const Footer = () => {
     
     // Se for um objeto com dias da semana
     if (typeof hours === 'object') {
-      const days = Object.entries(hours).map(([day, time]) => {
-        const dayNames: { [key: string]: string } = {
-          segunda: 'Segunda',
-          terca: 'Terça',
-          quarta: 'Quarta',
-          quinta: 'Quinta',
-          sexta: 'Sexta',
-          sabado: 'Sábado',
-          domingo: 'Domingo'
-        };
-        return `${dayNames[day] || day}: ${time}`;
-      });
-      return days.join('\n');
+      const dayOrder = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo', 'feriado'];
+      const dayNames: { [key: string]: string } = {
+        segunda: 'Segunda',
+        terca: 'Terça',
+        quarta: 'Quarta',
+        quinta: 'Quinta',
+        sexta: 'Sexta',
+        sabado: 'Sábado',
+        domingo: 'Domingo',
+        feriado: 'Feriado'
+      };
+      
+      const orderedDays = dayOrder
+        .filter(day => hours[day])
+        .map(day => `${dayNames[day]}: ${hours[day]}`);
+      
+      return orderedDays.join('\n');
     }
     
     return hours;

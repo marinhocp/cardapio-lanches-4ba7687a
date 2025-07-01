@@ -66,7 +66,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
       if (error) throw error;
       
       const categoryName = data?.name?.toLowerCase() || '';
-      setIsBeverage(categoryName.includes('bebida') || categoryName.includes('refrigerante') || categoryName.includes('suco'));
+      const isBeverageCategory = categoryName.includes('bebida') || 
+                                categoryName.includes('refrigerante') || 
+                                categoryName.includes('suco') ||
+                                categoryName.includes('drink');
+      setIsBeverage(isBeverageCategory);
     } catch (error) {
       console.error('Erro ao verificar categoria:', error);
     }
@@ -88,8 +92,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const handleAddToCart = () => {
     addItem({ 
       ...product, 
-      observations,
-      extras: selectedExtras 
+      observations: isBeverage ? undefined : observations,
+      extras: isBeverage ? undefined : selectedExtras 
     });
     setObservations('');
     setSelectedExtras([]);
@@ -144,7 +148,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
           <div className="flex justify-between items-center">
             <span className="text-3xl font-bold text-red-600">
               R$ {getTotalPrice().toFixed(2).replace('.', ',')}
-              {getExtrasPrice() > 0 && (
+              {!isBeverage && getExtrasPrice() > 0 && (
                 <span className="text-sm text-gray-600 block">
                   (Base: R$ {product.price.toFixed(2).replace('.', ',')} + Extras: R$ {getExtrasPrice().toFixed(2).replace('.', ',')})
                 </span>
