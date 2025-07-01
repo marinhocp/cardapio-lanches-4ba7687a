@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { supabase } from '../integrations/supabase/client';
 import ExtraSelector from './ExtraSelector';
 
 interface Product {
@@ -10,6 +11,7 @@ interface Product {
   description: string;
   price: number;
   image: string;
+  category_id?: string;
 }
 
 interface ProductModalProps {
@@ -17,12 +19,71 @@ interface ProductModalProps {
   onClose: () => void;
 }
 
+interface Extra {
+  id: string;
+  name: string;
+  price: number;
+}
+
 const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const [observations, setObservations] = useState('');
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+  const [allExtras, setAllExtras] = useState<Extra[]>([]);
+  const [isBeverage, setIsBeverage] = useState(false);
   const { addItem } = useCart();
 
+  useEffect(() => {
+    if (product) {
+      fetchExtras();
+      checkIfBeverage();
+    }
+  }, [product]);
+
+  const fetchExtras = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('extras')
+        .select('id, name, price')
+        .eq('active', true);
+
+      if (error) throw error;
+      setAllExtras(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar extras:', error);
+    }
+  };
+
+  const checkIfBeverage = async () => {
+    if (!product?.category_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('id', product.category_id)
+        .single();
+
+      if (error) throw error;
+      
+      const categoryName = data?.name?.toLowerCase() || '';
+      setIsBeverage(categoryName.includes('bebida') || categoryName.includes('refrigerante') || categoryName.includes('suco'));
+    } catch (error) {
+      console.error('Erro ao verificar categoria:', error);
+    }
+  };
+
   if (!product) return null;
+
+  const getExtrasPrice = () => {
+    return selectedExtras.reduce((total, id) => {
+      const extra = allExtras.find(e => e.id === id);
+      return total + (extra ? extra.price : 0);
+    }, 0);
+  };
+
+  const getTotalPrice = () => {
+    return product.price + getExtrasPrice();
+  };
 
   const handleAddToCart = () => {
     addItem({ 
@@ -57,28 +118,37 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
           <h2 className="text-3xl font-bold mb-4 text-gray-800">{product.name}</h2>
           <p className="text-gray-600 mb-6 text-lg">{product.description}</p>
           
-          <div className="mb-6">
-            <ExtraSelector
-              selectedExtras={selectedExtras}
-              onExtrasChange={setSelectedExtras}
-            />
-          </div>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observações (opcional)
-            </label>
-            <textarea
-              value={observations}
-              onChange={(e) => setObservations(e.target.value)}
-              placeholder="Ex: sem cebola, sem milho, ponto da carne, etc..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            />
-          </div>
+          {!isBeverage && (
+            <>
+              <div className="mb-6">
+                <ExtraSelector
+                  selectedExtras={selectedExtras}
+                  onExtrasChange={setSelectedExtras}
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Observações (opcional)
+                </label>
+                <textarea
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  placeholder="Ex: sem cebola, sem milho, ponto da carne, etc..."
+                  className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+            </>
+          )}
           
           <div className="flex justify-between items-center">
             <span className="text-3xl font-bold text-red-600">
-              R$ {product.price.toFixed(2).replace('.', ',')}
+              R$ {getTotalPrice().toFixed(2).replace('.', ',')}
+              {getExtrasPrice() > 0 && (
+                <span className="text-sm text-gray-600 block">
+                  (Base: R$ {product.price.toFixed(2).replace('.', ',')} + Extras: R$ {getExtrasPrice().toFixed(2).replace('.', ',')})
+                </span>
+              )}
             </span>
             <button
               onClick={handleAddToCart}

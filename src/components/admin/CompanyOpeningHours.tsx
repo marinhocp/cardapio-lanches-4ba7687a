@@ -18,7 +18,8 @@ const CompanyOpeningHours = ({ companyInfo, onUpdateOpeningHours }: CompanyOpeni
     { key: 'quinta', label: 'Quinta-feira' },
     { key: 'sexta', label: 'Sexta-feira' },
     { key: 'sabado', label: 'Sábado' },
-    { key: 'domingo', label: 'Domingo' }
+    { key: 'domingo', label: 'Domingo' },
+    { key: 'feriado', label: 'Feriado' }
   ];
 
   return (

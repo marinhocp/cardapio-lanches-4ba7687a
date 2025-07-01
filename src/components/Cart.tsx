@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, Edit } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '../integrations/supabase/client';
+import { getClienteFromSession, clearClienteFromSession } from '../utils/clienteUtils';
 import ExtraSelector from './ExtraSelector';
+import BackToWhatsAppButton from './BackToWhatsAppButton';
 
 interface CartProps {
   isOpen: boolean;
@@ -32,6 +34,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
   const [editExtras, setEditExtras] = useState<string[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [allExtras, setAllExtras] = useState<Extra[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -102,6 +105,23 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     }).filter(Boolean);
   };
 
+  const getExtrasPrice = (extraIds: string[]) => {
+    return extraIds.reduce((total, id) => {
+      const extra = allExtras.find(e => e.id === id);
+      return total + (extra ? extra.price : 0);
+    }, 0);
+  };
+
+  const getItemTotalPrice = (item: any) => {
+    const basePrice = item.price;
+    const extrasPrice = getExtrasPrice(item.extras || []);
+    return basePrice + extrasPrice;
+  };
+
+  const getTotalWithExtras = () => {
+    return items.reduce((total, item) => total + getItemTotalPrice(item), 0);
+  };
+
   const handleSubmitOrder = async () => {
     if (!paymentMethod || !deliveryMethod) {
       alert('Por favor, selecione a forma de pagamento e entrega.');
@@ -121,6 +141,8 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
 
     try {
+      const cliente = getClienteFromSession();
+      
       // Formatar mensagem do pedido
       const orderItems = items.map(item => {
         let itemText = `• ${item.name}`;
@@ -135,6 +157,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         if (item.observations) {
           itemText += ` - Obs: ${item.observations}`;
         }
+        
+        const itemTotal = getItemTotalPrice(item);
+        itemText += ` - R$ ${itemTotal.toFixed(2).replace('.', ',')}`;
         
         return itemText;
       });
@@ -155,7 +180,11 @@ ${orderItems.join('\n')}
         orderMessage += `\n📧 Email: ${email}`;
       }
 
-      orderMessage += `\n\n💰 Total: R$ ${getTotal().toFixed(2).replace('.', ',')}`;
+      if (cliente) {
+        orderMessage += `\n👤 Cliente: ${cliente}`;
+      }
+
+      orderMessage += `\n\n💰 Total: R$ ${getTotalWithExtras().toFixed(2).replace('.', ',')}`;
 
       console.log('Pedido enviado:', orderMessage);
 
@@ -166,10 +195,12 @@ ${orderItems.join('\n')}
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': 'Bearer webhook-secret-token-123', // Token secreto para proteção
             },
             mode: 'no-cors',
             body: JSON.stringify({
               message: orderMessage,
+              cliente: cliente,
               timestamp: new Date().toISOString(),
             }),
           });
@@ -178,13 +209,14 @@ ${orderItems.join('\n')}
         }
       }
 
-      alert('Pedido enviado com sucesso!');
+      // Limpar dados
       clearCart();
+      clearClienteFromSession();
       setPaymentMethod('');
       setDeliveryMethod('');
       setAddress('');
       setEmail('');
-      onClose();
+      setShowSuccessMessage(true);
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
       alert('Erro ao enviar pedido. Tente novamente.');
@@ -192,6 +224,28 @@ ${orderItems.join('\n')}
       setIsSubmitting(false);
     }
   };
+
+  if (showSuccessMessage) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">Pedido Finalizado</h2>
+            <button
+              onClick={() => {
+                setShowSuccessMessage(false);
+                onClose();
+              }}
+              className="bg-gray-100 rounded-full p-2 hover:bg-gray-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <BackToWhatsAppButton show={true} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -257,7 +311,7 @@ ${orderItems.join('\n')}
                         
                         {item.extras && item.extras.length > 0 && (
                           <p className="text-sm text-blue-600 mt-1">
-                            Extras: {getExtraNames(item.extras).join(', ')}
+                            Extras: {getExtraNames(item.extras).join(', ')} (+R$ {getExtrasPrice(item.extras).toFixed(2).replace('.', ',')})
                           </p>
                         )}
                         
@@ -265,7 +319,7 @@ ${orderItems.join('\n')}
                           <p className="text-sm text-gray-600 mt-1">Obs: {item.observations}</p>
                         )}
                         
-                        <p className="text-red-600 font-bold">R$ {item.price.toFixed(2).replace('.', ',')}</p>
+                        <p className="text-red-600 font-bold">R$ {getItemTotalPrice(item).toFixed(2).replace('.', ',')}</p>
                       </div>
                       
                       <div className="flex gap-2">
@@ -294,7 +348,7 @@ ${orderItems.join('\n')}
           <div className="border-t p-6 space-y-4">
             <div className="text-right">
               <p className="text-2xl font-bold text-red-600">
-                Total: R$ {getTotal().toFixed(2).replace('.', ',')}
+                Total: R$ {getTotalWithExtras().toFixed(2).replace('.', ',')}
               </p>
             </div>
 

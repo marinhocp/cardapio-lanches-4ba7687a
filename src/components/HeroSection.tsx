@@ -13,13 +13,19 @@ interface Promotion {
   valid_until: string | null;
 }
 
+interface CompanyInfo {
+  logo_url: string | null;
+}
+
 const HeroSection = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
 
   useEffect(() => {
     fetchActivePromotions();
+    fetchCompanyInfo();
   }, []);
 
   const fetchActivePromotions = async () => {
@@ -39,6 +45,21 @@ const HeroSection = () => {
       setPromotions(data || []);
     } catch (error) {
       console.error('Erro ao buscar promoções:', error);
+    }
+  };
+
+  const fetchCompanyInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_info')
+        .select('logo_url')
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      setCompanyInfo(data);
+    } catch (error) {
+      console.error('Erro ao buscar informações da empresa:', error);
     } finally {
       setLoading(false);
     }
@@ -51,6 +72,16 @@ const HeroSection = () => {
       <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center">
+            {companyInfo?.logo_url && (
+              <div className="mb-8">
+                <img 
+                  src={companyInfo.logo_url} 
+                  alt="Logo da empresa"
+                  className="mx-auto h-24 w-auto object-contain"
+                />
+              </div>
+            )}
+            
             <h2 className="text-4xl md:text-6xl font-bold mb-6">
               Os Melhores Burgers da Cidade!
             </h2>
@@ -85,7 +116,7 @@ const HeroSection = () => {
                 )}
                 
                 <div className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors inline-block">
-                  Ver Promoção
+                  Adicionar ao Carrinho
                 </div>
               </div>
             ) : (
