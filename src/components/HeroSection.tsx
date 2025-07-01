@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useCart } from '../contexts/CartContext';
 import { showToast } from '../utils/toast';
+import PromotionModal from './PromotionModal';
 
 interface Promotion {
   id: string;
@@ -22,6 +23,7 @@ const HeroSection = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -77,70 +79,95 @@ const HeroSection = () => {
     showToast(`${promotion.name} adicionado ao carrinho!`, 'success');
   };
 
+  const handlePromotionClick = (promotion: Promotion) => {
+    setSelectedPromotion(promotion);
+  };
+
   const activePromotion = promotions.length > 0 ? promotions[0] : null;
 
   return (
-    <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          {companyInfo?.logo_url && (
-            <div className="mb-8">
-              <img 
-                src={companyInfo.logo_url} 
-                alt="Logo da empresa"
-                className="mx-auto h-24 w-auto object-contain"
-              />
-            </div>
-          )}
-          
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Os Melhores Burgers da Cidade!
-          </h2>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Ingredientes frescos, sabor inigualável e entrega rápida. 
-            Experimente nossos hamburgers artesanais feitos com muito carinho.
-          </p>
-          
-          {loading ? (
-            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-lg">Carregando promoções...</p>
-            </div>
-          ) : activePromotion ? (
-            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-2xl font-bold mb-2">🔥 PROMOÇÃO DO DIA</h3>
-              <p className="text-lg font-semibold">
-                {activePromotion.name}
-              </p>
-              <p className="text-3xl font-bold mb-3">
-                R$ {activePromotion.price.toFixed(2).replace('.', ',')}
-              </p>
-              {activePromotion.description && (
-                <p className="text-sm mb-3">{activePromotion.description}</p>
-              )}
-              {activePromotion.valid_until && (
-                <p className="text-sm mb-4">
-                  *Válida até {new Date(activePromotion.valid_until).toLocaleDateString('pt-BR')}!
-                </p>
-              )}
-              
-              <button
-                onClick={() => handleAddPromotionToCart(activePromotion)}
-                className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors inline-block"
+    <>
+      <section className="pt-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            {companyInfo?.logo_url && (
+              <div className="mb-8">
+                <img 
+                  src={companyInfo.logo_url} 
+                  alt="Logo da empresa"
+                  className="mx-auto h-24 w-auto object-contain"
+                />
+              </div>
+            )}
+            
+            <h2 className="text-4xl md:text-6xl font-bold mb-6">
+              Os Melhores Burgers da Cidade!
+            </h2>
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+              Ingredientes frescos, sabor inigualável e entrega rápida. 
+              Experimente nossos hamburgers artesanais feitos com muito carinho.
+            </p>
+            
+            {loading ? (
+              <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+                <p className="text-lg">Carregando promoções...</p>
+              </div>
+            ) : activePromotion ? (
+              <div 
+                className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto cursor-pointer hover:bg-yellow-300 transition-colors"
+                onClick={() => handlePromotionClick(activePromotion)}
               >
-                Adicionar ao Carrinho
-              </button>
-            </div>
-          ) : (
-            <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-2xl font-bold mb-2">🍔 HAMBURGERS ARTESANAIS</h3>
-              <p className="text-lg">
-                Confira nosso cardápio completo com os melhores sabores!
-              </p>
-            </div>
-          )}
+                <h3 className="text-2xl font-bold mb-2">🔥 PROMOÇÃO DO DIA</h3>
+                <p className="text-lg font-semibold">
+                  {activePromotion.name}
+                </p>
+                <p className="text-3xl font-bold mb-3">
+                  R$ {activePromotion.price.toFixed(2).replace('.', ',')}
+                </p>
+                {activePromotion.description && (
+                  <p className="text-sm mb-3">{activePromotion.description}</p>
+                )}
+                {activePromotion.valid_until && (
+                  <p className="text-sm mb-4">
+                    *Válida até {new Date(activePromotion.valid_until).toLocaleDateString('pt-BR')}!
+                  </p>
+                )}
+                
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddPromotionToCart(activePromotion);
+                    }}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors"
+                  >
+                    Adicionar ao Carrinho
+                  </button>
+                  <button
+                    onClick={() => handlePromotionClick(activePromotion)}
+                    className="bg-transparent border-2 border-red-600 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-600 hover:text-white transition-colors"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-400 text-red-600 rounded-lg p-6 max-w-md mx-auto">
+                <h3 className="text-2xl font-bold mb-2">🍔 HAMBURGERS ARTESANAIS</h3>
+                <p className="text-lg">
+                  Confira nosso cardápio completo com os melhores sabores!
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <PromotionModal 
+        promotion={selectedPromotion} 
+        onClose={() => setSelectedPromotion(null)} 
+      />
+    </>
   );
 };
 

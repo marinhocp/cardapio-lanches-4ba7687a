@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import ProductOrderControls from './ProductOrderControls';
+import ProductImageUpload from './ProductImageUpload';
 
 interface Product {
   id: string;
@@ -313,13 +314,10 @@ const ProductManager = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="image">URL da Imagem</Label>
-                <Input
-                  id="image"
+              <div className="md:col-span-2">
+                <ProductImageUpload
                   value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://exemplo.com/imagem.jpg"
+                  onChange={(url) => setFormData({ ...formData, image: url })}
                 />
               </div>
               <div className="md:col-span-2 space-y-2">
