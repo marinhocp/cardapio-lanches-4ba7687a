@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '../integrations/supabase/client';
 import { getClienteFromSession, clearClienteFromSession } from '../utils/clienteUtils';
-import CartItem from './CartItem';
-import OrderForm from './OrderForm';
-import OrderSummary from './OrderSummary';
+import CartHeader from './CartHeader';
+import CartContent from './CartContent';
+import CartFooter from './CartFooter';
 import SuccessModal from './SuccessModal';
 
 interface CartProps {
@@ -25,7 +24,7 @@ interface Extra {
 }
 
 const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
-  const { items, removeItem, updateItem, getTotal, clearCart } = useCart();
+  const { items, removeItem, updateItem, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,13 +73,6 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const getExtraNames = (extraIds: string[]) => {
-    return extraIds.map(id => {
-      const extra = allExtras.find(e => e.id === id);
-      return extra ? extra.name : '';
-    }).filter(Boolean);
-  };
-
   const getExtrasPrice = (extraIds: string[]) => {
     return extraIds.reduce((total, id) => {
       const extra = allExtras.find(e => e.id === id);
@@ -96,6 +88,13 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
   const getTotalWithExtras = () => {
     return items.reduce((total, item) => total + getItemTotalPrice(item), 0);
+  };
+
+  const getExtraNames = (extraIds: string[]) => {
+    return extraIds.map(id => {
+      const extra = allExtras.find(e => e.id === id);
+      return extra ? extra.name : '';
+    }).filter(Boolean);
   };
 
   const handleSubmitOrder = async () => {
@@ -220,57 +219,31 @@ ${orderItems.join('\n')}
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-          <div className="flex justify-between items-center p-6 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Carrinho de Compras</h2>
-            <button
-              onClick={onClose}
-              className="bg-gray-100 rounded-full p-2 hover:bg-gray-200"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6">
-            {items.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">Seu carrinho está vazio</p>
-            ) : (
-              <div className="space-y-4">
-                {items.map((item) => (
-                  <CartItem
-                    key={item.id}
-                    item={item}
-                    allExtras={allExtras}
-                    onUpdate={updateItem}
-                    onRemove={removeItem}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          <CartHeader onClose={onClose} />
+          
+          <CartContent
+            items={items}
+            allExtras={allExtras}
+            onUpdateItem={updateItem}
+            onRemoveItem={removeItem}
+          />
 
           {items.length > 0 && (
-            <div className="border-t p-6 space-y-4">
-              <OrderSummary
-                total={getTotalWithExtras()}
-                paymentMethod={paymentMethod}
-                deliveryMethod={deliveryMethod}
-                isSubmitting={isSubmitting}
-                onSubmit={handleSubmitOrder}
-              />
-
-              <OrderForm
-                paymentMethod={paymentMethod}
-                deliveryMethod={deliveryMethod}
-                address={address}
-                email={email}
-                changeAmount={changeAmount}
-                onPaymentMethodChange={setPaymentMethod}
-                onDeliveryMethodChange={setDeliveryMethod}
-                onAddressChange={setAddress}
-                onEmailChange={setEmail}
-                onChangeAmountChange={setChangeAmount}
-              />
-            </div>
+            <CartFooter
+              total={getTotalWithExtras()}
+              paymentMethod={paymentMethod}
+              deliveryMethod={deliveryMethod}
+              address={address}
+              email={email}
+              changeAmount={changeAmount}
+              isSubmitting={isSubmitting}
+              onPaymentMethodChange={setPaymentMethod}
+              onDeliveryMethodChange={setDeliveryMethod}
+              onAddressChange={setAddress}
+              onEmailChange={setEmail}
+              onChangeAmountChange={setChangeAmount}
+              onSubmitOrder={handleSubmitOrder}
+            />
           )}
         </div>
       </div>
