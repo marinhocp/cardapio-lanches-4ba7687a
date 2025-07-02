@@ -123,7 +123,32 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     try {
       const cliente = getClienteFromSession();
       
-      // Formatar mensagem do pedido
+      // Estruturar dados do pedido em JSON
+      const orderData = {
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          extras: item.extras ? getExtraNames(item.extras) : [],
+          extrasPrice: item.extras ? getExtrasPrice(item.extras) : 0,
+          observations: item.observations || '',
+          totalPrice: getItemTotalPrice(item)
+        })),
+        delivery: {
+          method: deliveryMethod,
+          address: deliveryMethod === 'delivery' ? address : null
+        },
+        payment: {
+          method: paymentMethod,
+          email: paymentMethod === 'Pix' ? email : null,
+          changeAmount: paymentMethod === 'Dinheiro' && changeAmount ? parseFloat(changeAmount) : null
+        },
+        cliente: cliente,
+        totalAmount: getTotalWithExtras(),
+        timestamp: new Date().toISOString()
+      };
+
+      // Formatar mensagem do pedido para log
       const orderItems = items.map(item => {
         let itemText = `• ${item.name}`;
         
@@ -170,27 +195,27 @@ ${orderItems.join('\n')}
 
       orderMessage += `\n\n💰 Total: R$ ${getTotalWithExtras().toFixed(2).replace('.', ',')}`;
 
-      console.log('Pedido enviado:', orderMessage);
+      console.log('Pedido estruturado:', orderData);
+      console.log('Pedido formatado:', orderMessage);
 
       // Enviar para webhook se configurado
       if (companyInfo?.webhook_url) {
         try {
-          await fetch(companyInfo.webhook_url, {
+          const response = await fetch(companyInfo.webhook_url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Bearer webhook-secret-token-123',
             },
-            mode: 'no-cors',
-            body: JSON.stringify({
-              message: orderMessage,
-              cliente: cliente,
-              timestamp: new Date().toISOString(),
-            }),
+            body: JSON.stringify(orderData),
           });
+          
+          console.log('Webhook enviado para:', companyInfo.webhook_url);
+          console.log('Status da resposta:', response.status);
         } catch (error) {
           console.error('Erro ao enviar webhook:', error);
         }
+      } else {
+        console.log('Nenhuma URL de webhook configurada');
       }
 
       // Limpar dados

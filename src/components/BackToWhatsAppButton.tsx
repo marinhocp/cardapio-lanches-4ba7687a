@@ -9,9 +9,14 @@ const BackToWhatsAppButton: React.FC<BackToWhatsAppButtonProps> = ({ show }) => 
   if (!show) return null;
 
   const handleBackToWhatsApp = () => {
-    const telefone = "5511999999999"; // Substitua pelo número do WhatsApp de atendimento
-    const mensagem = "Olá! Meu pedido foi finalizado com sucesso.";
-    window.location.href = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+    const cliente = sessionStorage.getItem('cliente');
+    if (cliente) {
+      const mensagem = "Olá! Meu pedido foi finalizado com sucesso.";
+      window.location.href = `https://wa.me/${cliente}?text=${encodeURIComponent(mensagem)}`;
+    } else {
+      console.error('Parâmetro cliente não encontrado');
+      alert('Erro: Não foi possível obter o número do cliente');
+    }
   };
 
   return (
