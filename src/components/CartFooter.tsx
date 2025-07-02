@@ -36,14 +36,6 @@ const CartFooter: React.FC<CartFooterProps> = ({
 }) => {
   return (
     <div className="border-t p-6 space-y-4">
-      <OrderSummary
-        total={total}
-        paymentMethod={paymentMethod}
-        deliveryMethod={deliveryMethod}
-        isSubmitting={isSubmitting}
-        onSubmit={onSubmitOrder}
-      />
-
       <OrderForm
         paymentMethod={paymentMethod}
         deliveryMethod={deliveryMethod}
@@ -55,6 +47,14 @@ const CartFooter: React.FC<CartFooterProps> = ({
         onAddressChange={onAddressChange}
         onEmailChange={onEmailChange}
         onChangeAmountChange={onChangeAmountChange}
+      />
+
+      <OrderSummary
+        total={total}
+        paymentMethod={paymentMethod}
+        deliveryMethod={deliveryMethod}
+        isSubmitting={isSubmitting}
+        onSubmit={onSubmitOrder}
       />
     </div>
   );

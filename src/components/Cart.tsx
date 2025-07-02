@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '../integrations/supabase/client';
-import { getClienteFromSession, clearClienteFromSession } from '../utils/clienteUtils';
+import { getBotFromSession, clearBotFromSession } from '../utils/clienteUtils';
 import CartHeader from './CartHeader';
 import CartContent from './CartContent';
 import CartFooter from './CartFooter';
@@ -121,7 +121,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
 
     try {
-      const cliente = getClienteFromSession();
+      const bot = getBotFromSession();
       
       // Estruturar dados do pedido em JSON
       const orderData = {
@@ -143,7 +143,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
           email: paymentMethod === 'Pix' ? email : null,
           changeAmount: paymentMethod === 'Dinheiro' && changeAmount ? parseFloat(changeAmount) : null
         },
-        cliente: cliente,
+        bot: bot,
         totalAmount: getTotalWithExtras(),
         timestamp: new Date().toISOString()
       };
@@ -189,8 +189,8 @@ ${orderItems.join('\n')}
         orderMessage += `\n💰 Troco para: R$ ${parseFloat(changeAmount).toFixed(2).replace('.', ',')}`;
       }
 
-      if (cliente) {
-        orderMessage += `\n👤 Cliente: ${cliente}`;
+      if (bot) {
+        orderMessage += `\n👤 Bot: ${bot}`;
       }
 
       orderMessage += `\n\n💰 Total: R$ ${getTotalWithExtras().toFixed(2).replace('.', ',')}`;
@@ -220,7 +220,7 @@ ${orderItems.join('\n')}
 
       // Limpar dados
       clearCart();
-      clearClienteFromSession();
+      clearBotFromSession();
       setPaymentMethod('');
       setDeliveryMethod('');
       setAddress('');

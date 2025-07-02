@@ -4,26 +4,26 @@ export const formatPhoneNumber = (phone: string): string => {
   return phone.replace(/\D/g, '');
 };
 
-export const getClienteFromUrl = (): string | null => {
+export const getBotFromUrl = (): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
-  const cliente = urlParams.get('cliente');
+  const bot = urlParams.get('bot');
   
   // Se encontrou o parâmetro, formata removendo caracteres especiais
-  if (cliente) {
-    return formatPhoneNumber(cliente);
+  if (bot) {
+    return formatPhoneNumber(bot);
   }
   
   return null;
 };
 
-export const storeClienteInSession = (cliente: string): void => {
-  sessionStorage.setItem('cliente', cliente);
+export const storeBotInSession = (bot: string): void => {
+  sessionStorage.setItem('bot', bot);
 };
 
-export const getClienteFromSession = (): string | null => {
-  return sessionStorage.getItem('cliente');
+export const getBotFromSession = (): string | null => {
+  return sessionStorage.getItem('bot');
 };
 
-export const clearClienteFromSession = (): void => {
-  sessionStorage.removeItem('cliente');
+export const clearBotFromSession = (): void => {
+  sessionStorage.removeItem('bot');
 };
