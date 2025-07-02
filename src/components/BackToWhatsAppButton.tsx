@@ -10,11 +10,14 @@ const BackToWhatsAppButton: React.FC<BackToWhatsAppButtonProps> = ({ show }) => 
 
   const handleBackToWhatsApp = () => {
     const cliente = sessionStorage.getItem('cliente');
+    console.log('Tentando obter cliente do sessionStorage:', cliente);
+    console.log('Todos os itens do sessionStorage:', sessionStorage);
     if (cliente) {
       const mensagem = "Olá! Meu pedido foi finalizado com sucesso.";
+      console.log('Redirecionando para WhatsApp:', `https://wa.me/${cliente}`);
       window.location.href = `https://wa.me/${cliente}?text=${encodeURIComponent(mensagem)}`;
     } else {
-      console.error('Parâmetro cliente não encontrado');
+      console.error('Parâmetro cliente não encontrado no sessionStorage');
       alert('Erro: Não foi possível obter o número do cliente');
     }
   };

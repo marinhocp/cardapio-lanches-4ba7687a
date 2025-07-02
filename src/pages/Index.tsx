@@ -16,8 +16,13 @@ const Index = () => {
   useEffect(() => {
     // Capturar e armazenar o parâmetro cliente da URL
     const cliente = getClienteFromUrl();
+    console.log('URL completa:', window.location.href);
+    console.log('Parâmetro cliente encontrado:', cliente);
     if (cliente) {
       storeClienteInSession(cliente);
+      console.log('Cliente armazenado no sessionStorage:', cliente);
+    } else {
+      console.log('Nenhum parâmetro cliente encontrado na URL');
     }
   }, []);
 
