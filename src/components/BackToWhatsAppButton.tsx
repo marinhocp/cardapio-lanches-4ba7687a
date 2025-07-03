@@ -15,6 +15,13 @@ const BackToWhatsAppButton: React.FC<BackToWhatsAppButtonProps> = ({ show }) => 
     if (bot) {
       const mensagem = "Olá! Meu pedido foi finalizado com sucesso.";
       console.log('Redirecionando para WhatsApp:', `https://wa.me/${bot}`);
+      
+      // Limpar todos os parâmetros do sessionStorage
+      sessionStorage.removeItem('bot');
+      sessionStorage.removeItem('cliente');
+      sessionStorage.removeItem('instancia');
+      console.log('Parâmetros limpos do sessionStorage');
+      
       window.location.href = `https://wa.me/${bot}?text=${encodeURIComponent(mensagem)}`;
     } else {
       console.error('Parâmetro bot não encontrado no sessionStorage');

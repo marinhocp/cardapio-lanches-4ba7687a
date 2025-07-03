@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '../integrations/supabase/client';
-import { getBotFromSession, clearBotFromSession } from '../utils/clienteUtils';
+import { getBotFromSession, getClienteFromSession, getInstanciaFromSession } from '../utils/clienteUtils';
 import CartHeader from './CartHeader';
 import CartContent from './CartContent';
 import CartFooter from './CartFooter';
@@ -122,29 +122,31 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
     try {
       const bot = getBotFromSession();
+      const cliente = getClienteFromSession();
+      const instancia = getInstanciaFromSession();
       
-      // Estruturar dados do pedido em JSON
+      // Estruturar dados do pedido em JSON conforme nova estrutura
       const orderData = {
-        items: items.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          extras: item.extras ? getExtraNames(item.extras) : [],
-          extrasPrice: item.extras ? getExtrasPrice(item.extras) : 0,
-          observations: item.observations || '',
-          totalPrice: getItemTotalPrice(item)
+        itemsMessage: items.map(item => ({
+          [item.name]: {
+            preço: {
+              valor: getItemTotalPrice(item),
+              extras: item.extras ? getExtraNames(item.extras) : [],
+              observação: item.observations ?? ''
+            }
+          }
         })),
-        delivery: {
-          method: deliveryMethod,
+        paymentMethod: {
+          totalAmount: getTotalWithExtras(),
+          troco: paymentMethod === 'Dinheiro' && changeAmount ? parseFloat(changeAmount) : null,
+          email: paymentMethod === 'Pix' ? email : null
+        },
+        deliveryMethod: {
           address: deliveryMethod === 'delivery' ? address : null
         },
-        payment: {
-          method: paymentMethod,
-          email: paymentMethod === 'Pix' ? email : null,
-          changeAmount: paymentMethod === 'Dinheiro' && changeAmount ? parseFloat(changeAmount) : null
-        },
-        bot: bot,
-        totalAmount: getTotalWithExtras(),
+        bot: bot ?? null,
+        cliente: cliente ?? null,
+        instancia: instancia ?? null,
         timestamp: new Date().toISOString()
       };
 
@@ -218,9 +220,8 @@ ${orderItems.join('\n')}
         console.log('Nenhuma URL de webhook configurada');
       }
 
-      // Limpar dados
+      // Limpar dados do formulário (mas manter parâmetros no sessionStorage)
       clearCart();
-      clearBotFromSession();
       setPaymentMethod('');
       setDeliveryMethod('');
       setAddress('');
