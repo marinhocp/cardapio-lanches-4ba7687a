@@ -13,7 +13,7 @@ const BackToWhatsAppButton: React.FC<BackToWhatsAppButtonProps> = ({ show }) => 
     console.log('Tentando obter bot do sessionStorage:', bot);
     console.log('Todos os itens do sessionStorage:', sessionStorage);
     if (bot) {
-      const mensagem = "Olá! Meu pedido foi finalizado com sucesso.";
+      const mensagem = "Sim! O pedido está correto.";
       console.log('Redirecionando para WhatsApp:', `https://wa.me/${bot}`);
       
       // Limpar todos os parâmetros do sessionStorage
