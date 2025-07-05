@@ -11,28 +11,28 @@ export type Database = {
     Tables: {
       categories: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
           display_order: number | null
           id: string
           name: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
           name: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
           name?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -40,7 +40,8 @@ export type Database = {
         Row: {
           address: string | null
           banner_url: string | null
-          created_at: string
+          created_at: string | null
+          delivery_price: number | null
           description: string | null
           email: string | null
           id: string
@@ -49,13 +50,14 @@ export type Database = {
           opening_hours: Json | null
           phone: string | null
           social_media: Json | null
-          updated_at: string
+          updated_at: string | null
           webhook_url: string | null
         }
         Insert: {
           address?: string | null
           banner_url?: string | null
-          created_at?: string
+          created_at?: string | null
+          delivery_price?: number | null
           description?: string | null
           email?: string | null
           id?: string
@@ -64,13 +66,14 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           social_media?: Json | null
-          updated_at?: string
+          updated_at?: string | null
           webhook_url?: string | null
         }
         Update: {
           address?: string | null
           banner_url?: string | null
-          created_at?: string
+          created_at?: string | null
+          delivery_price?: number | null
           description?: string | null
           email?: string | null
           id?: string
@@ -79,98 +82,262 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           social_media?: Json | null
-          updated_at?: string
+          updated_at?: string | null
           webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          created_at: string | null
+          email: string | null
+          id: number
+          name: string
+          phone: string
+          preferences: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: number
+          name: string
+          phone: string
+          preferences?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: number
+          name?: string
+          phone?: string
+          preferences?: string | null
         }
         Relationships: []
       }
       extras: {
         Row: {
           active: boolean | null
-          created_at: string
+          created_at: string | null
           description: string | null
           display_order: number | null
           id: string
           name: string
           price: number
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           active?: boolean | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
           name: string
-          price?: number
-          updated_at?: string
+          price: number
+          updated_at?: string | null
         }
         Update: {
           active?: boolean | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
           name?: string
           price?: number
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       n8n_chat_histories: {
         Row: {
+          created_at: string | null
           id: number
           message: Json
           session_id: string
         }
         Insert: {
+          created_at?: string | null
           id?: number
           message: Json
           session_id: string
         }
         Update: {
+          created_at?: string | null
           id?: number
           message?: Json
           session_id?: string
         }
         Relationships: []
       }
+      order_item_extras: {
+        Row: {
+          extra_id: string
+          id: string
+          order_item_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          extra_id: string
+          id?: string
+          order_item_id: string
+          quantity?: number
+          unit_price: number
+        }
+        Update: {
+          extra_id?: string
+          id?: string
+          order_item_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_item_extras_extra_id_fkey"
+            columns: ["extra_id"]
+            isOneToOne: false
+            referencedRelation: "extras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_extras_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          id: string
+          notes: string | null
+          order_id: string
+          product_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          order_id: string
+          product_id: string
+          quantity?: number
+          unit_price: number
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          order_id?: string
+          product_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          customer_id: number
+          delivery_address: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          session_token: string
+          status: string
+          total_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: number
+          delivery_address?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          session_token: string
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: number
+          delivery_address?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          session_token?: string
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean | null
           category_id: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           display_order: number | null
           id: string
-          image: string | null
+          image_url: string | null
           name: string
           price: number
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           active?: boolean | null
           category_id?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
-          image?: string | null
+          image_url?: string | null
           name: string
           price: number
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           active?: boolean | null
           category_id?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
-          image?: string | null
+          image_url?: string | null
           name?: string
           price?: number
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -184,206 +351,64 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string
+          created_at: string | null
           email: string | null
+          full_name: string | null
           id: string
           role: string | null
-          status: Database["public"]["Enums"]["user_status"] | null
-          user_type: Database["public"]["Enums"]["user_type"] | null
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
+          full_name?: string | null
           id: string
           role?: string | null
-          status?: Database["public"]["Enums"]["user_status"] | null
-          user_type?: Database["public"]["Enums"]["user_type"] | null
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
+          full_name?: string | null
           id?: string
           role?: string | null
-          status?: Database["public"]["Enums"]["user_status"] | null
-          user_type?: Database["public"]["Enums"]["user_type"] | null
+          updated_at?: string | null
         }
         Relationships: []
       }
       promotions: {
         Row: {
           active: boolean | null
-          created_at: string
+          created_at: string | null
           description: string | null
           id: string
-          image: string | null
+          image_url: string | null
           name: string
           price: number
-          updated_at: string
+          updated_at: string | null
           valid_until: string | null
         }
         Insert: {
           active?: boolean | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
-          image?: string | null
+          image_url?: string | null
           name: string
           price: number
-          updated_at?: string
+          updated_at?: string | null
           valid_until?: string | null
         }
         Update: {
           active?: boolean | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
-          image?: string | null
+          image_url?: string | null
           name?: string
           price?: number
-          updated_at?: string
+          updated_at?: string | null
           valid_until?: string | null
-        }
-        Relationships: []
-      }
-      tbl_cardapio: {
-        Row: {
-          cardapio: string
-          created_at: string
-          descricao_cardapio: string | null
-          id: number
-          status: number | null
-          validade: string | null
-        }
-        Insert: {
-          cardapio: string
-          created_at?: string
-          descricao_cardapio?: string | null
-          id?: number
-          status?: number | null
-          validade?: string | null
-        }
-        Update: {
-          cardapio?: string
-          created_at?: string
-          descricao_cardapio?: string | null
-          id?: number
-          status?: number | null
-          validade?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tbl_cardapio_status_fkey"
-            columns: ["status"]
-            isOneToOne: false
-            referencedRelation: "tbl_status"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tbl_cliente: {
-        Row: {
-          cpf_cliente: string | null
-          created_at: string | null
-          data_nascimento: string | null
-          email_cliente: string | null
-          endereco_cliente: string | null
-          id: number
-          id_mensagem: string | null
-          nome_cliente: string
-          preferencias: string | null
-          session_id: string | null
-          status: number | null
-          telefone_cliente: string | null
-        }
-        Insert: {
-          cpf_cliente?: string | null
-          created_at?: string | null
-          data_nascimento?: string | null
-          email_cliente?: string | null
-          endereco_cliente?: string | null
-          id?: number
-          id_mensagem?: string | null
-          nome_cliente: string
-          preferencias?: string | null
-          session_id?: string | null
-          status?: number | null
-          telefone_cliente?: string | null
-        }
-        Update: {
-          cpf_cliente?: string | null
-          created_at?: string | null
-          data_nascimento?: string | null
-          email_cliente?: string | null
-          endereco_cliente?: string | null
-          id?: number
-          id_mensagem?: string | null
-          nome_cliente?: string
-          preferencias?: string | null
-          session_id?: string | null
-          status?: number | null
-          telefone_cliente?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tbl_cliente_status_fkey"
-            columns: ["status"]
-            isOneToOne: false
-            referencedRelation: "tbl_status"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tbl_status: {
-        Row: {
-          created_at: string | null
-          descricao_status: string
-          id: number
-        }
-        Insert: {
-          created_at?: string | null
-          descricao_status: string
-          id?: number
-        }
-        Update: {
-          created_at?: string | null
-          descricao_status?: string
-          id?: number
-        }
-        Relationships: []
-      }
-      tbl_vector_store: {
-        Row: {
-          chunk_id: number | null
-          content: string
-          embedding: string
-          filename: string | null
-          id: string
-          last_updated: string | null
-          metadata: Json | null
-          source: string | null
-          type: string | null
-        }
-        Insert: {
-          chunk_id?: number | null
-          content: string
-          embedding: string
-          filename?: string | null
-          id?: string
-          last_updated?: string | null
-          metadata?: Json | null
-          source?: string | null
-          type?: string | null
-        }
-        Update: {
-          chunk_id?: number | null
-          content?: string
-          embedding?: string
-          filename?: string | null
-          id?: string
-          last_updated?: string | null
-          metadata?: Json | null
-          source?: string | null
-          type?: string | null
         }
         Relationships: []
       }
@@ -392,144 +417,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_status: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_page_parents: {
-        Args: { page_id: number }
-        Returns: {
-          id: number
-          parent_page_id: number
-          path: string
-          meta: Json
-        }[]
-      }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: unknown
-      }
-      match_documents: {
-        Args: { query_embedding: string; match_count?: number; filter?: Json }
-        Returns: {
-          id: number
-          content: string
-          metadata: Json
-          similarity: number
-        }[]
-      }
-      match_page_sections: {
-        Args: {
-          embedding: string
-          match_threshold: number
-          match_count: number
-          min_content_length: number
-        }
-        Returns: {
-          id: number
-          page_id: number
-          slug: string
-          heading: string
-          content: string
-          similarity: number
-        }[]
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
+      [_ in never]: never
     }
     Enums: {
-      user_status: "pending" | "approved" | "rejected" | "suspended"
-      user_type: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -644,9 +535,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      user_status: ["pending", "approved", "rejected", "suspended"],
-      user_type: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const
