@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { createOrderData, formatOrderMessage, getTotalWithExtras } from '../utils/orderUtils';
 import { getBotFromSession } from '../utils/clienteUtils';
+import { supabase } from '../integrations/supabase/client';
 
 interface Extra {
   id: string;
@@ -14,7 +15,7 @@ interface CompanyInfo {
 }
 
 export const useOrderSubmission = (companyInfo: CompanyInfo | null, allExtras: Extra[]) => {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, sessionToken, orderId } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateOrder = (
@@ -63,6 +64,23 @@ export const useOrderSubmission = (companyInfo: CompanyInfo | null, allExtras: E
     try {
       const bot = getBotFromSession();
       
+      // Atualizar status do pedido para 'confirmed'
+      if (orderId) {
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({ 
+            status: 'confirmed',
+            payment_method: paymentMethod,
+            delivery_address: deliveryMethod === 'delivery' ? address : null,
+            total_price: getTotalWithExtras(items, allExtras)
+          })
+          .eq('id', orderId);
+
+        if (updateError) {
+          console.error('Erro ao atualizar status do pedido:', updateError);
+        }
+      }
+      
       // Estruturar dados do pedido em JSON conforme nova estrutura
       const orderData = createOrderData(
         items,
@@ -71,7 +89,8 @@ export const useOrderSubmission = (companyInfo: CompanyInfo | null, allExtras: E
         deliveryMethod,
         address,
         email,
-        changeAmount
+        changeAmount,
+        sessionToken // Adicionar session_token
       );
 
       // Formatar mensagem do pedido para log

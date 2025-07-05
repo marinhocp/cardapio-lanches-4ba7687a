@@ -19,7 +19,7 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
+  image_url: string | null;
   category_id: string | null;
   active: boolean;
   display_order: number;
@@ -157,7 +157,7 @@ const ProductManager = () => {
       name: product.name,
       description: product.description || '',
       price: product.price.toString(),
-      image: product.image || '',
+      image: product.image_url || '',
       category_id: product.category_id || '',
       active: product.active
     });

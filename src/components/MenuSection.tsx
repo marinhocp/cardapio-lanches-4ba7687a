@@ -8,7 +8,7 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
+  image_url: string | null;
   category_id: string | null;
   active: boolean;
 }
@@ -126,14 +126,14 @@ const MenuSection: React.FC<MenuSectionProps> = ({ onProductClick }) => {
                     name: product.name,
                     description: product.description || '',
                     price: Number(product.price),
-                    image: product.image || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop'
+                    image: product.image_url || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop'
                   }}
                   onClick={() => onProductClick({
                     id: product.id,
                     name: product.name,
                     description: product.description || '',
                     price: Number(product.price),
-                    image: product.image || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop'
+                    image: product.image_url || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=300&fit=crop'
                   })}
                 />
               ))}

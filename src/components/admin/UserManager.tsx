@@ -2,17 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import UserTableRow from './UserTableRow';
 
 interface UserProfile {
   id: string;
   email: string;
-  status: 'pending' | 'approved' | 'rejected' | 'suspended';
-  user_type: 'admin' | 'user';
+  full_name: string;
   role: string;
   created_at: string;
+  updated_at: string;
 }
 
 const UserManager = () => {
@@ -44,48 +44,24 @@ const UserManager = () => {
     }
   };
 
-  const updateUserStatus = async (userId: string, status: 'pending' | 'approved' | 'rejected' | 'suspended') => {
+  const updateUserRole = async (userId: string, role: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ status })
+        .update({ role })
         .eq('id', userId);
 
       if (error) throw error;
 
       toast({
-        title: "Status atualizado",
-        description: `Usuário ${status === 'approved' ? 'aprovado' : status === 'rejected' ? 'rejeitado' : 'suspenso'} com sucesso!`,
+        title: "Role atualizada",
+        description: `Role do usuário atualizada com sucesso!`,
       });
 
       fetchUsers();
     } catch (error: any) {
       toast({
-        title: "Erro ao atualizar status",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateUserType = async (userId: string, userType: 'admin' | 'user') => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ user_type: userType })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Tipo de usuário atualizado",
-        description: `Usuário agora é ${userType === 'admin' ? 'administrador' : 'usuário comum'}!`,
-      });
-
-      fetchUsers();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar tipo de usuário",
+        title: "Erro ao atualizar role",
         description: error.message,
         variant: "destructive",
       });
@@ -114,20 +90,19 @@ const UserManager = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Data de Cadastro</TableHead>
-                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <UserTableRow
-                    key={user.id}
-                    user={user}
-                    onUpdateStatus={updateUserStatus}
-                    onUpdateUserType={updateUserType}
-                  />
+                  <TableRow key={user.id}>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.full_name || '-'}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>

@@ -9,7 +9,7 @@ interface Promotion {
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
+  image_url: string | null;
   active: boolean;
   valid_until: string | null;
   created_at: string;

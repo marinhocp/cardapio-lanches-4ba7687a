@@ -1,4 +1,5 @@
 import { getBotFromSession, getClienteFromSession, getInstanciaFromSession } from './clienteUtils';
+import { supabase } from '../integrations/supabase/client';
 
 interface Extra {
   id: string;
@@ -46,13 +47,15 @@ export const createOrderData = (
   deliveryMethod: string,
   address: string,
   email: string,
-  changeAmount: string
+  changeAmount: string,
+  sessionToken: string | null = null
 ) => {
   const bot = getBotFromSession();
   const cliente = getClienteFromSession();
   const instancia = getInstanciaFromSession();
 
   return {
+    session_token: sessionToken,
     itemsMessage: items.map(item => ({
       [item.name]: {
         preço: {
@@ -63,11 +66,13 @@ export const createOrderData = (
       }
     })),
     paymentMethod: {
+      type: paymentMethod,
       totalAmount: getTotalWithExtras(items, allExtras),
       troco: paymentMethod === 'Dinheiro' && changeAmount ? parseFloat(changeAmount) : null,
       email: paymentMethod === 'Pix' ? email : null
     },
     deliveryMethod: {
+      type: deliveryMethod,
       address: deliveryMethod === 'delivery' ? address : null
     },
     bot: bot ?? null,

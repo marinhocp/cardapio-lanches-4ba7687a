@@ -10,7 +10,7 @@ interface Promotion {
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
+  image_url: string | null;
   active: boolean;
   valid_until: string | null;
 }
@@ -73,7 +73,7 @@ const HeroSection = () => {
       id: promotion.id,
       name: promotion.name,
       price: promotion.price,
-      image: promotion.image || '/placeholder.svg'
+      image: promotion.image_url || '/placeholder.svg'
     });
     
     showToast(`${promotion.name} adicionado ao carrinho!`, 'success');

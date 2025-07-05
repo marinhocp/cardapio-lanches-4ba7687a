@@ -12,7 +12,7 @@ interface Promotion {
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
+  image_url: string | null;
   active: boolean;
   valid_until: string | null;
   created_at: string;
@@ -119,7 +119,7 @@ const PromotionManager = () => {
       name: promotion.name,
       description: promotion.description || '',
       price: promotion.price.toString(),
-      image: promotion.image || '',
+      image: promotion.image_url || '',
       valid_until: promotion.valid_until || '',
       active: promotion.active
     });

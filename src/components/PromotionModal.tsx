@@ -10,7 +10,7 @@ interface Promotion {
   name: string;
   description: string | null;
   price: number;
-  image: string | null;
+  image_url: string | null;
   valid_until: string | null;
 }
 
@@ -31,7 +31,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onClose }) =
       id: promotion.id,
       name: promotion.name,
       price: promotion.price,
-      image: promotion.image || '/placeholder.svg',
+      image: promotion.image_url || '/placeholder.svg',
       observations,
       extras: selectedExtras 
     });
@@ -57,9 +57,9 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onClose }) =
             <span className="font-bold text-lg">🔥 PROMOÇÃO ESPECIAL!</span>
           </div>
           
-          {promotion.image && (
+          {promotion.image_url && (
             <img 
-              src={promotion.image} 
+              src={promotion.image_url} 
               alt={promotion.name}
               className="w-full h-64 object-cover rounded-lg mb-6"
             />

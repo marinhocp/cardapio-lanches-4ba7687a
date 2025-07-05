@@ -4,6 +4,25 @@ export const formatPhoneNumber = (phone: string): string => {
   return phone.replace(/\D/g, '');
 };
 
+// Session Token functions
+export const getSessionTokenFromUrl = (): string | null => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('st');
+};
+
+export const storeSessionTokenInLocalStorage = (sessionToken: string): void => {
+  localStorage.setItem('session_token', sessionToken);
+};
+
+export const getSessionTokenFromLocalStorage = (): string | null => {
+  return localStorage.getItem('session_token');
+};
+
+export const clearSessionTokenFromLocalStorage = (): void => {
+  localStorage.removeItem('session_token');
+};
+
+// Original functions
 export const getBotFromUrl = (): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
   const bot = urlParams.get('bot');

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +18,7 @@ export const useAuthState = () => {
       
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('user_type, status')
+        .select('role')
         .eq('id', userId)
         .single();
       
@@ -32,33 +31,14 @@ export const useAuthState = () => {
       
       if (profile) {
         console.log('User profile found:', profile);
-        const isUserAdmin = profile.user_type === 'admin' && profile.status === 'approved';
+        const isUserAdmin = profile.role === 'admin';
         setIsAdmin(isUserAdmin);
-        setUserStatus(profile.status);
+        setUserStatus('approved'); // Temporário - sem status no banco
         
         console.log('Is admin:', isUserAdmin);
-        console.log('User status:', profile.status);
+        console.log('User role:', profile.role);
         
-        // Show message if user is not approved
-        if (profile.status === 'pending') {
-          toast({
-            title: "Conta pendente de aprovação",
-            description: "Sua conta está aguardando aprovação por um administrador.",
-            variant: "default",
-          });
-        } else if (profile.status === 'rejected') {
-          toast({
-            title: "Conta rejeitada",
-            description: "Sua conta foi rejeitada. Entre em contato com o suporte.",
-            variant: "destructive",
-          });
-        } else if (profile.status === 'suspended') {
-          toast({
-            title: "Conta suspensa",
-            description: "Sua conta foi suspensa. Entre em contato com o suporte.",
-            variant: "destructive",
-          });
-        }
+        // Sem sistema de aprovação por enquanto
       } else {
         console.log('No profile found for user');
         setIsAdmin(false);
